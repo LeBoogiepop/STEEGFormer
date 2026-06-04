@@ -21,6 +21,7 @@ import torch
 import torch.distributed as dist
 from torch import inf
 import numpy as np
+import math
 
 def print_size(net):
     """
@@ -67,11 +68,15 @@ class SmoothedValue(object):
 
     @property
     def median(self):
+        if len(self.deque) == 0:
+            return float('nan')
         d = torch.tensor(list(self.deque))
         return d.median().item()
 
     @property
     def avg(self):
+        if len(self.deque) == 0:
+            return float('nan')
         d = torch.tensor(list(self.deque), dtype=torch.float32)
         return d.mean().item()
 
@@ -84,10 +89,14 @@ class SmoothedValue(object):
 
     @property
     def max(self):
+        if len(self.deque) == 0:
+            return float('nan')
         return max(self.deque)
 
     @property
     def value(self):
+        if len(self.deque) == 0:
+            return float('nan')
         return self.deque[-1]
 
     def __str__(self):

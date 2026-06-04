@@ -220,7 +220,11 @@ def run_phase(model, train_loader, test_loader_whole, test_loaders, prefix, args
 
         # 5) Wandb logging every 5 epochs (and always on the last one)
         flat = {}
-        if epoch % wandb_log_freq==0 or epoch == epochs - 1:
+        wandb_disabled = getattr(args, "disable_wandb", False) or (
+            os.environ.get("WANDB_DISABLED", "").strip().lower() in {"1", "true", "yes", "on"}
+            or os.environ.get("WANDB_MODE", "").strip().lower() == "disabled"
+        )
+        if (epoch % wandb_log_freq == 0 or epoch == epochs - 1) and not wandb_disabled:
             flat = wandb_log_stats(
                 prefix=prefix,
                 epoch=epoch,

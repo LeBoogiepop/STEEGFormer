@@ -23,6 +23,14 @@ from util.eeg_dataset import MultiEEGDataLoader
 from util.utils import get_downstream_task_info, get_model, split_recordings_for_evaluation, get_dataset, construct_data_loaders, get_loss_criterion, prepare_args_for_phase, construct_mixup, prepared_downstream_task_for_model, should_skip_run
 
 
+def _wandb_disabled_from_env():
+    disabled_vals = {"1", "true", "yes", "on"}
+    return (
+        os.environ.get("WANDB_DISABLED", "").strip().lower() in disabled_vals
+        or os.environ.get("WANDB_MODE", "").strip().lower() == "disabled"
+    )
+
+
 def get_args_parser():
     parser = argparse.ArgumentParser('MAE fine-tuning for EEG classification', add_help=False)
     # Wandb parameters
@@ -34,6 +42,8 @@ def get_args_parser():
                         help='Wandb log directory')
     parser.add_argument('--wandb_log_every', type=int, default=5,
                         help="only log to W&B every N epochs")
+    parser.add_argument('--disable_wandb', action='store_true',
+                        help='Disable Weights & Biases logging and API calls')
     
     # Model parameters
     parser.add_argument('--model', default='vit_base_patch32', type=str, metavar='MODEL',
@@ -155,6 +165,12 @@ def get_args_parser():
 
 def main_train(args):
     device = torch.device(args.device)
+    disable_wandb = args.disable_wandb or _wandb_disabled_from_env()
+    if disable_wandb:
+        # Enforce disabled mode so wandb never prompts interactively.
+        os.environ["WANDB_DISABLED"] = "true"
+        os.environ["WANDB_MODE"] = "disabled"
+        print("W&B disabled: skipping API checks and online logging.", flush=True)
     global_out_put_dir = args.output_dir
     # job name
     job_name = args.evaluation_scheme
@@ -167,9 +183,15 @@ def main_train(args):
     print(f"There are {experiment_run_split.get_number_of_runs()} of runs in this experiment!", flush= True)
     mixup_fn = construct_mixup(args) #controls mix_up for data augmentation and label smoothing
     
-    # Initialize the W&B API (for online checks)
-    api = wandb.Api()
-    proj_path = f"{args.wandb_entity}/{args.wandb_project}"
+    # Initialize the W&B API (for online checks). Allow local runs without login.
+    api = None
+    proj_path = None
+    if not disable_wandb:
+        try:
+            api = wandb.Api()
+            proj_path = f"{args.wandb_entity}/{args.wandb_project}"
+        except Exception as exc:
+            print(f"W&B API unavailable, continuing without online skip checks: {exc}", flush=True)
     
     for run_idx in range(experiment_run_split.get_number_of_runs()):
         # initialize the run name
@@ -186,19 +208,22 @@ def main_train(args):
             this_run_name = f"fold{fold}_{args.model}_{args.optimizer_spec}_{wandb.util.generate_id()}"
             
             # SKIP TRAIN PHASE?
-            if should_skip_run(
-                api,
-                proj_path,
-                args.log_dir,
-                wandb_group_name,
-                fold,
-                job_type="train",
-                downstream_task=args.downstream_task,
-                model_name=args.model,
-                subject_of_interest=current_run_sub_of_interested,
-                optimizer_spec=args.optimizer_spec,
-                evaluation_scheme = args.evaluation_scheme
-            ):
+            skip_existing = False
+            if api is not None and proj_path is not None:
+                skip_existing = should_skip_run(
+                    api,
+                    proj_path,
+                    args.log_dir,
+                    wandb_group_name,
+                    fold,
+                    job_type="train",
+                    downstream_task=args.downstream_task,
+                    model_name=args.model,
+                    subject_of_interest=current_run_sub_of_interested,
+                    optimizer_spec=args.optimizer_spec,
+                    evaluation_scheme = args.evaluation_scheme
+                )
+            if skip_existing:
                 print(f"⏭  Skipping train for {this_run_name} fold {fold} (already done).", flush=True)
                 continue
             else:   
@@ -223,7 +248,7 @@ def main_train(args):
                 
             # get model
             model = get_model(args)
-            model.cuda()
+            model.to(device)
 
             # get the training set, finetune set and the test set
             trainsets, finetunesets, testsets = get_dataset(args, fold, this_run_split)
@@ -236,24 +261,25 @@ def main_train(args):
             criterion = get_loss_criterion(args)
             
             # initialize a fresh W&B run for this fold
-            run = wandb.init(
-                project=args.wandb_project,
-                entity=args.wandb_entity,
-                group=wandb_group_name,
-                dir=args.wandb_log_dir,
-                name=this_run_name,
-                job_type="train",
-                reinit=True,
-                config={
-                  **vars(args),
-                  "experiment_type": args.evaluation_scheme,         # population / per-subject / leave-one-out
-                  "stage":           "train",       # explicit in config too, if you want
-                  "fold":            fold,
-                  "subject_of_interest": current_run_sub_of_interested,
-                },
-            )
-            # watch model parameters & gradients
-            wandb.watch(model, log="all", log_freq=100)
+            if not disable_wandb:
+                run = wandb.init(
+                    project=args.wandb_project,
+                    entity=args.wandb_entity,
+                    group=wandb_group_name,
+                    dir=args.wandb_log_dir,
+                    name=this_run_name,
+                    job_type="train",
+                    reinit=True,
+                    config={
+                      **vars(args),
+                      "experiment_type": args.evaluation_scheme,         # population / per-subject / leave-one-out
+                      "stage":           "train",       # explicit in config too, if you want
+                      "fold":            fold,
+                      "subject_of_interest": current_run_sub_of_interested,
+                    },
+                )
+                # watch model parameters & gradients
+                wandb.watch(model, log="all", log_freq=100)
             
             # ——— 1) initial training ———
             prefix_train = f"{this_run_name}/fold{fold}/training"
@@ -267,7 +293,8 @@ def main_train(args):
             )
             
             # finish the training W&B run
-            wandb.finish()
+            if not disable_wandb:
+                wandb.finish()
             
             # ——— 2) fine‐tuning ———
             if finetunesets:
@@ -281,27 +308,28 @@ def main_train(args):
                 # reinitialize the model
                 model = get_model(args)
                 model.load_state_dict(base_state)
-                model.cuda()
+                model.to(device)
                 
                 # Start a new W&B run for finetuning
-                run = wandb.init(
-                    project=args.wandb_project,
-                    entity=args.wandb_entity,
-                    group=wandb_group_name,
-                    dir=args.wandb_log_dir,
-                    name=this_run_name,
-                    job_type="fine-tune",
-                    reinit=True,
-                    config={
-                      **vars(args),
-                      "experiment_type": args.evaluation_scheme,         # population / per-subject / leave-one-out
-                      "stage":           "fine-tune",       # explicit in config too, if you want
-                      "fold":            fold,
-                      "subject_of_interest": current_run_sub_of_interested,
-                    },
-                )
+                if not disable_wandb:
+                    run = wandb.init(
+                        project=args.wandb_project,
+                        entity=args.wandb_entity,
+                        group=wandb_group_name,
+                        dir=args.wandb_log_dir,
+                        name=this_run_name,
+                        job_type="fine-tune",
+                        reinit=True,
+                        config={
+                          **vars(args),
+                          "experiment_type": args.evaluation_scheme,         # population / per-subject / leave-one-out
+                          "stage":           "fine-tune",       # explicit in config too, if you want
+                          "fold":            fold,
+                          "subject_of_interest": current_run_sub_of_interested,
+                        },
+                    )
 
-                wandb.watch(model, log="all", log_freq=100)
+                    wandb.watch(model, log="all", log_freq=100)
                 
                 run_phase(
                     model, big_finetune_loader, test_loader_whole, test_loaders, prefix_ft, args,
@@ -310,7 +338,8 @@ def main_train(args):
                     mixup_fn= mixup_fn, wandb_log_freq=args.wandb_log_every
                 )
                 # finish the finetuning W&B run
-                wandb.finish()
+                if not disable_wandb:
+                    wandb.finish()
                 del combined_ft, base_state
             del model, train_loader, test_loader_whole, train_loaders, finetune_loaders, test_loaders, trainsets, finetunesets, testsets
             torch.cuda.empty_cache()

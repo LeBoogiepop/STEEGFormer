@@ -26,7 +26,10 @@ from models.EEGPT import LitEEGPTModel
 from models.biot import BIOTClassifier
 from models.bendr import BendrClassifier
 from models.cbramod import CBraModClassifier
-from models.fbssvepdnn import SSVEPDNN
+try:
+    from models.fbssvepdnn import SSVEPDNN
+except ModuleNotFoundError:
+    SSVEPDNN = None
 import numpy as np
 
 from util.eeg_downstream_dataset import UpperLimbDataset, ErrorDataset, InnerSpeechDataset, BinocularSSVEPDataset, BCI2aDataset, AlzheimerDataset, DTUDataset
@@ -411,8 +414,6 @@ def construct_mixup(args):
 def get_loss_criterion(args):
     if args.downstream_task == "dtu":
         criterion = tildeq_loss
-    if args.wandb_project == "debug":
-        criterion = simple_regression_loss
     else:
         criterion = SoftTargetCrossEntropy()
     #if args.smoothing > 0.:
@@ -529,7 +530,7 @@ def get_model(args):
         if args.vit_pretrained_model_dir:
             checkpoint = torch.load(args.vit_pretrained_model_dir, map_location='cpu')
             print("Load pre-trained checkpoint from: %s" % args.vit_pretrained_model_dir)
-            checkpoint_model = checkpoint['model']
+            checkpoint_model = checkpoint['model'] if 'model' in checkpoint else checkpoint
             state_dict = model.state_dict()
             for k in ['head.weight', 'head.bias']:
                 if k in checkpoint_model and checkpoint_model[k].shape != state_dict[k].shape:
@@ -564,6 +565,11 @@ def get_model(args):
         return model
     
     elif args.model == "ssvepdnn":
+        if SSVEPDNN is None:
+            raise ModuleNotFoundError(
+                "models.fbssvepdnn is missing in this checkout. "
+                "Use another model (e.g., steegformer/labram) or add fbssvepdnn.py."
+            )
         model = SSVEPDNN(no_fb=7, no_channels=args.downstream_task_num_chan, no_combined_channels=280, drop_out_ratio_1=0.2, drop_out_ratio_2=0.9, input_length=int(args.downstream_task_t*args.downstream_task_fs), num_class=args.nb_classes)
         return model
     
@@ -830,22 +836,35 @@ def prepared_downstream_task_for_model(args):
         args.model_downstream_task_fs = 200
     elif "vit" in args.model:
         args.model_downstream_task_fs = 128
-        with open("/vsc-hard-mounts/leuven-data/343/vsc34340/new_eeg_mae/senloc_file/sen_chan_idx.pkl", "rb") as f:
-            data = pickle.load(f)
-            # build a lowercase lookup
-            lower_map = {k.lower(): v for k, v in data['channels_mapping'].items()}
-            chan_idx = []
-            channels_keep = []
-            for ch_idx, ch in enumerate(args.downstream_task_chan_name):
-                key = ch.lower()
-                if key not in lower_map:
-                    print(f"error! Unknown channel {ch} found in this dataset for the eegvit")
-                else:
-                    chan_idx.append(lower_map[key])
-                    channels_keep.append(ch_idx)
-            args.vit_channel_info = chan_idx
-            args.vit_channels_to_keep = channels_keep
-            print("keep ", len(channels_keep), "channels for ViT model")
+        senloc_path = "/vsc-hard-mounts/leuven-data/343/vsc34340/new_eeg_mae/senloc_file/sen_chan_idx.pkl"
+        if os.path.isfile(senloc_path):
+            with open(senloc_path, "rb") as f:
+                data = pickle.load(f)
+                # build a lowercase lookup
+                lower_map = {k.lower(): v for k, v in data['channels_mapping'].items()}
+                chan_idx = []
+                channels_keep = []
+                for ch_idx, ch in enumerate(args.downstream_task_chan_name):
+                    key = ch.lower()
+                    if key not in lower_map:
+                        print(f"error! Unknown channel {ch} found in this dataset for the eegvit")
+                    else:
+                        chan_idx.append(lower_map[key])
+                        channels_keep.append(ch_idx)
+                args.vit_channel_info = chan_idx
+                args.vit_channels_to_keep = channels_keep
+                print("keep ", len(channels_keep), "channels for ViT model")
+        else:
+            # Local fallback: keep all channels with identity indices.
+            # This lets local benchmarking proceed without cluster-specific senloc assets.
+            n_chan = len(args.downstream_task_chan_name)
+            args.vit_channel_info = list(range(n_chan))
+            args.vit_channels_to_keep = list(range(n_chan))
+            print(
+                f"Warning: {senloc_path} not found. Using identity channel mapping "
+                f"for {n_chan} channels.",
+                flush=True,
+            )
     else:
         args.model_downstream_task_fs = args.downstream_task_fs
         

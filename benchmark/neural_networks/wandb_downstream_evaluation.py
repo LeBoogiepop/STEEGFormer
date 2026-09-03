@@ -224,10 +224,10 @@ def main_train(args):
                     evaluation_scheme = args.evaluation_scheme
                 )
             if skip_existing:
-                print(f"⏭  Skipping train for {this_run_name} fold {fold} (already done).", flush=True)
+                print(f"[skip] Skipping train for {this_run_name} fold {fold} (already done).", flush=True)
                 continue
             else:   
-                print(f"⏭Not skipping train for {this_run_name} fold {fold} (not done).", flush=True)
+                print(f"[run] Not skipping train for {this_run_name} fold {fold} (not done).", flush=True)
                 #continue
                 
             args = prepare_args_for_phase(args,phase="train")

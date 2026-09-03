@@ -1,5 +1,6 @@
+# Local BCI IV-2a pickles (A01.pkl … A09.pkl). Update data_dir after migration if needed.
 bci_iv2a:
-  data_dir: /Users/boogiepop/Desktop/STAGE ISHI/data/benchmark_preprocessed_datasets/bci_iv2a
+  data_dir: "C:/Users/maxim/OneDrive/Bureau/COURS/2021 2026 - INGÉ/2025 2026 - INGE3/STAGE/POUR LE STAGE/STEEGFormer/g2_transfer/bci_iv2a"
   task_time: 4
   fold: 1
   fs: 256

@@ -16,6 +16,17 @@ data/
 *.pth
 *.ckpt
 
+# Node / build artifacts
+node_modules/
+pptx_build/node_modules/
+
+# Local run outputs (TensorBoard, logs)
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Claude Code
 CLAUDE.md
 .claude/

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Debrief Liz — LOSO spatial attention</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #fff;
+      --text: #1a1d21;
+      --muted: #5c6570;
+      --line: #d8dde3;
+      --accent: #2f6fed;
+      --good: #1f8a4c;
+      --bad: #c0392b;
+      --warn: #b8860b;
+      --chance: #888;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    h1 { font-size: 1.6rem; margin: 0 0 8px; }
+    h2 { font-size: 1.15rem; margin: 28px 0 12px; }
+    p, li { color: var(--muted); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .stat .v { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+    .stat .l { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+    .callout {
+      border-left: 4px solid var(--warn);
+      background: #fff9e8;
+      padding: 12px 14px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95rem;
+    }
+    .callout.danger { border-color: var(--bad); background: #fdeeee; }
+    .tabs { display: flex; gap: 8px; margin: 12px 0; }
+    .tab {
+      border: 1px solid var(--line);
+      background: var(--card);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    #chart {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 42px 1fr 52px;
+      align-items: center;
+      gap: 8px;
+      margin: 3px 0;
+      font-size: 0.82rem;
+    }
+    .bar-track {
+      height: 14px;
+      background: #eef1f4;
+      border-radius: 3px;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      min-width: 2px;
+    }
+    .ref-line {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: var(--chance);
+      opacity: 0.7;
+    }
+    .ref-line.pop { background: var(--good); }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 10px 0 0; font-size: 0.8rem; color: var(--muted); }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 0.85rem;
+    }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+    th { background: #eef1f4; font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .good { color: var(--good); font-weight: 600; }
+    .bad { color: var(--bad); font-weight: 600; }
+    .running { color: var(--warn); font-weight: 600; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Debrief Liz — LOSO spatial attention</h1>
+  <p>ST-EEGFormer · 40/41 folds · source mnode 1 Sep 2026 · <strong>population 61.7%</strong> (cite this)</p>
+
+  <div class="callout">Partial LOSO mean ~56.7% on 40 subjects — <strong>do not quote as final</strong>. Subject 059 was still running.</div>
+  <div class="callout danger"><strong>Left vs right:</strong> not in logs. Ask Liz if she has LaBraM class-wise recall.</div>
+
+  <div class="stats">
+    <div class="stat"><div class="v">40 / 41</div><div class="l">Folds done</div></div>
+    <div class="stat"><div class="v">56.7%</div><div class="l">Partial mean (zero-shot)</div></div>
+    <div class="stat"><div class="v">36–81%</div><div class="l">Range per subject</div></div>
+    <div class="stat"><div class="v">61.7%</div><div class="l">Population</div></div>
+  </div>
+
+  <h2>What to say (English)</h2>
+  <ul>
+    <li>Population 61.7%, same ballpark as LaBraM ~62%.</li>
+    <li>LOSO 40/41 — spread matters more than a mean.</li>
+    <li>Easy: 007, 051 ~81%. Hard: 019 ~36%, 11 below chance.</li>
+    <li>No left/right split yet.</li>
+  </ul>
+
+  <h2>Population (61.7% — cite this)</h2>
+  <p>Train + test on all 43 subjects. Different protocol from LOSO below.</p>
+  <div id="pop-chart" style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 16px 12px;margin-bottom:8px"></div>
+
+  <h2>Graph — held-out accuracy per subject (LOSO)</h2>
+  <p><strong>Zero-shot</strong> = train on everyone except that person, test them. <strong>After calibration</strong> = then fine-tune on that person's data.</p>
+  <div class="tabs">
+    <button class="tab active" data-view="zero">Zero-shot</button>
+    <button class="tab" data-view="cal">After calibration</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><span class="dot" style="background:#2f6fed"></span> Held-out acc</span>
+    <span><span class="dot" style="background:#888"></span> Chance 50%</span>
+    <span><span class="dot" style="background:#1f8a4c"></span> Population 61.7%</span>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h2>Easy (≥70% zero-shot)</h2>
+      <table>
+        <tr><th>Sub</th><th class="num">Zero</th><th class="num">Calib</th></tr>
+        <tr><td>007</td><td class="num good">81.3%</td><td class="num">82.8%</td></tr>
+        <tr><td>051</td><td class="num good">81.3%</td><td class="num">79.7%</td></tr>
+        <tr><td>029</td><td class="num good">79.7%</td><td class="num">93.8%</td></tr>
+        <tr><td>048</td><td class="num good">73.4%</td><td class="num">85.9%</td></tr>
+        <tr><td>003</td><td class="num good">70.3%</td><td class="num bad">46.9%</td></tr>
+        <tr><td>047</td><td class="num good">70.3%</td><td class="num">78.1%</td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>Hard (&lt;50% zero-shot)</h2>
+      <table>
+        <tr><th>Sub</th><th class="num">Zero</th><th class="num">Calib</th></tr>
+        <tr><td>019</td><td class="num bad">35.9%</td><td class="num">59.4%</td></tr>
+        <tr><td>004</td><td class="num bad">42.2%</td><td class="num">51.6%</td></tr>
+        <tr><td>033</td><td class="num bad">42.2%</td><td class="num">51.6%</td></tr>
+        <tr><td>015</td><td class="num bad">43.8%</td><td class="num">42.2%</td></tr>
+        <tr><td>020</td><td class="num bad">43.8%</td><td class="num">53.1%</td></tr>
+        <tr><td>043</td><td class="num bad">43.8%</td><td class="num">48.4%</td></tr>
+        <tr><td>056</td><td class="num bad">43.8%</td><td class="num">46.9%</td></tr>
+        <tr><td>045</td><td class="num bad">45.3%</td><td class="num">50.0%</td></tr>
+        <tr><td>002</td><td class="num bad">46.9%</td><td class="num">51.6%</td></tr>
+        <tr><td>009</td><td class="num bad">46.9%</td><td class="num">42.2%</td></tr>
+        <tr><td>055</td><td class="num bad">48.4%</td><td class="num">50.0%</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>Full table</h2>
+  <table id="full-table">
+    <tr>
+      <th>Sub</th><th>Status</th><th class="num">Zero-shot</th><th class="num">Calib</th><th class="num">Delta</th>
+    </tr>
+  </table>
+</main>
+<script>
+const ROWS = [
+  {sid:"007",done:true,tr:81.25,ft:82.81},{sid:"051",done:true,tr:81.25,ft:79.69},
+  {sid:"029",done:true,tr:79.69,ft:93.75},{sid:"048",done:true,tr:73.44,ft:85.94},
+  {sid:"003",done:true,tr:70.31,ft:46.88},{sid:"047",done:true,tr:70.31,ft:78.13},
+  {sid:"026",done:true,tr:68.75,ft:87.5},{sid:"024",done:true,tr:67.19,ft:59.38},
+  {sid:"050",done:true,tr:64.06,ft:45.31},{sid:"021",done:true,tr:62.5,ft:64.06},
+  {sid:"028",done:true,tr:62.5,ft:56.25},{sid:"053",done:true,tr:62.5,ft:62.5},
+  {sid:"013",done:true,tr:60.94,ft:48.44},{sid:"023",done:true,tr:59.38,ft:57.81},
+  {sid:"031",done:true,tr:59.38,ft:64.06},{sid:"005",done:true,tr:57.81,ft:50},
+  {sid:"006",done:true,tr:57.81,ft:60.94},{sid:"032",done:true,tr:57.81,ft:56.25},
+  {sid:"041",done:true,tr:57.81,ft:59.38},{sid:"042",done:true,tr:56.25,ft:29.69},
+  {sid:"052",done:true,tr:56.25,ft:46.88},{sid:"008",done:true,tr:54.69,ft:53.13},
+  {sid:"011",done:true,tr:54.69,ft:51.56},{sid:"012",done:true,tr:53.13,ft:43.75},
+  {sid:"025",done:true,tr:53.13,ft:45.31},{sid:"022",done:true,tr:51.56,ft:53.13},
+  {sid:"014",done:true,tr:50,ft:40.63},{sid:"036",done:true,tr:50,ft:48.44},
+  {sid:"046",done:true,tr:50,ft:60.94},{sid:"055",done:true,tr:48.44,ft:50},
+  {sid:"002",done:true,tr:46.88,ft:51.56},{sid:"009",done:true,tr:46.88,ft:42.19},
+  {sid:"045",done:true,tr:45.31,ft:50},{sid:"015",done:true,tr:43.75,ft:42.19},
+  {sid:"020",done:true,tr:43.75,ft:53.13},{sid:"043",done:true,tr:43.75,ft:48.44},
+  {sid:"056",done:true,tr:43.75,ft:46.88},{sid:"004",done:true,tr:42.19,ft:51.56},
+  {sid:"033",done:true,tr:42.19,ft:51.56},{sid:"019",done:true,tr:35.94,ft:59.38},
+  {sid:"059",done:false,tr:48.44,ft:null},
+];
+
+function renderPopChart() {
+  const labels = ["Chance", "LDA", "ST-EEGFormer", "LaBraM"];
+  const vals = [50, 55.7, 61.66, 62];
+  const cols = ["#9aa3ad", "#6b7b8c", "#2f6fed", "#1f8a4c"];
+  const max = 68;
+  const html = labels.map((lab, i) => {
+    const v = vals[i];
+    const w = (v / max) * 100;
+    return `<div class="bar-row" style="grid-template-columns:120px 1fr 52px">
+      <div>${lab}</div>
+      <div class="bar-track" style="height:22px">
+        <div class="bar-fill" style="width:${w}%;background:${cols[i]}"></div>
+      </div>
+      <div class="num">${v.toFixed(1)}%</div>
+    </div>`;
+  }).join("");
+  document.getElementById("pop-chart").innerHTML = html;
+}
+
+function color(v) {
+  if (v >= 70) return "#1f8a4c";
+  if (v < 50) return "#c0392b";
+  if (v < 60) return "#b8860b";
+  return "#2f6fed";
+}
+
+function renderChart(view) {
+  const done = ROWS.filter(r => r.done);
+  const sorted = [...done].sort((a,b) => (view==="zero" ? b.tr-a.tr : (b.ft||0)-(a.ft||0)));
+  const html = sorted.map(r => {
+    const v = view === "zero" ? r.tr : r.ft;
+    const w = Math.max(0, Math.min(100, v));
+  return `<div class="bar-row">
+      <div>${r.sid}</div>
+      <div class="bar-track">
+        <div class="ref-line" style="left:50%"></div>
+        <div class="ref-line pop" style="left:61.7%"></div>
+        <div class="bar-fill" style="width:${w}%;background:${color(v)}"></div>
+      </div>
+      <div class="num">${v.toFixed(1)}%</div>
+    </div>`;
+  }).join("");
+  document.getElementById("chart").innerHTML = html;
+}
+
+const tbody = document.getElementById("full-table");
+ROWS.forEach(r => {
+  const tr = document.createElement("tr");
+  const delta = r.done && r.ft != null ? (r.ft - r.tr) : null;
+  const cls = r.tr >= 70 ? "good" : (r.tr < 50 ? "bad" : "");
+  tr.innerHTML = `
+    <td>${r.sid}</td>
+    <td class="${r.done ? "" : "running"}">${r.done ? "done" : "running"}</td>
+    <td class="num ${cls}">${r.tr.toFixed(1)}%</td>
+    <td class="num">${r.ft == null ? "—" : r.ft.toFixed(1)+"%"}</td>
+    <td class="num">${delta == null ? "—" : (delta>=0?"+":"")+delta.toFixed(1)}</td>`;
+  tbody.appendChild(tr);
+});
+
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderChart(btn.dataset.view);
+  });
+});
+renderPopChart();
+renderChart("zero");
+</script>
+</body>
+</html>

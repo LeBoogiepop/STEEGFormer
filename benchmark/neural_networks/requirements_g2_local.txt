@@ -1,0 +1,19 @@
+# Local G.2 / BCI-IV2a benchmark (Windows + W&B disabled)
+# Python 3.10+ recommended.
+
+torch>=2.7.0
+torchvision
+# RTX 50-series (sm_120): use CUDA 12.8 wheels, e.g.
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+timm==1.0.10
+wandb==0.22.2
+tensorboard
+pyyaml
+numpy
+scipy
+scikit-learn
+pandas
+h5py
+einops
+linear-attention-transformer

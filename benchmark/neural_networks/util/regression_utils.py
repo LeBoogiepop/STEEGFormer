@@ -744,7 +744,7 @@ def print_size(net):
 
 
 def get_downstream_task_info(args):
-    with open(args.dataset_yaml, 'r') as f:
+    with open(args.dataset_yaml, 'r', encoding='utf-8') as f:
         dataset_yaml = yaml.safe_load(f)
     if args.downstream_task == "dtu":
         # for the regression
@@ -769,7 +769,7 @@ def get_downstream_task_info(args):
         args.downstream_task_chan_name = dataset_yaml[args.downstream_task]['chan_names']
         args.downstream_task_labram_divisor = dataset_yaml[args.downstream_task]['labram_divisor']
         args.downstream_task_eegpt_divisor = dataset_yaml[args.downstream_task]['eegpt_divisor']
-    with open(args.downstream_task_yaml, 'r') as f:
+    with open(args.downstream_task_yaml, 'r', encoding='utf-8') as f:
         task_yaml = yaml.safe_load(f)
     # 1) pull out just the label mapping (drop "num_classes")
     label_mapping = {k: v for k, v in task_yaml[args.downstream_task].items() if k != "num_classes"}

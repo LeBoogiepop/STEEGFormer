@@ -235,11 +235,45 @@ def run_phase(model, train_loader, test_loader_whole, test_loaders, prefix, args
                 args=args,
                 n_parameters=n_parameters,
             )
+        elif (epoch % wandb_log_freq == 0 or epoch == epochs - 1) and wandb_disabled:
+            # JSON-friendly scalars for offline runs (no W&B Tables / plots).
+            def _scalar(v):
+                if isinstance(v, (float, int)):
+                    x = float(v)
+                elif hasattr(v, "item"):
+                    x = float(v.item())
+                else:
+                    x = float(v)
+                if math.isnan(x) or math.isinf(x):
+                    return None
+                return x
+
+            flat = {f"{prefix}/epoch": float(epoch)}
+            for k, v in train_stats.items():
+                try:
+                    flat[f"{prefix}/train_{k}"] = _scalar(v)
+                except (TypeError, ValueError):
+                    pass
+            for k, v in test_whole.items():
+                if k in ("preds", "labels"):
+                    continue
+                try:
+                    flat[f"{prefix}/test_whole_{k}"] = _scalar(v)
+                except (TypeError, ValueError):
+                    pass
+            for subj, stats in individual.items():
+                for k, v in stats.items():
+                    if k in ("preds", "labels"):
+                        continue
+                    try:
+                        flat[f"{prefix}/{subj}_test_{k}"] = _scalar(v)
+                    except (TypeError, ValueError):
+                        pass
 
         # 9) JSON dump (optional)
         if log_dir and misc.is_main_process():
             fname = os.path.join(log_dir, f"log_{prefix.replace('/', '_')}")
-            with open(fname, "a") as f:
+            with open(fname, "a", encoding="utf-8") as f:
                 f.write(json.dumps(flat) + "\n")
                 
 

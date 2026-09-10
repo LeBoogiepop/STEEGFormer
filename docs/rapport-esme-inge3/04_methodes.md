@@ -6,7 +6,7 @@ Ce chapitre décrit **ce qui a été mis en place** : les données, la chaîne d
 
 ### 4.1.1 Le paradigme
 
-Le jeu utilisé est un protocole d’**attention visuo-spatiale couverte** enregistré au laboratoire (données ATR NBP, *Neural Basis of Perception*). À chaque essai, le sujet fixe un point central et porte son attention **à gauche ou à droite** sans mouvement oculaire ; la tâche de décodage est donc **binaire**, et le niveau du hasard est **50 %**. Ce paradigme est associé, dans le journal de bord et les présentations du laboratoire, aux travaux de **Morioka et al. (2014)**. Le PDF de cet article n’étant pas disponible sur la machine de rédaction, je m’en tiens à ce que le laboratoire utilise opérationnellement — fenêtre d’attention de 8 s, deux classes, 43 sujets — sans extrapoler sur le protocole original.
+Le jeu utilisé est un protocole d’**attention visuo-spatiale couverte** enregistré au laboratoire (données ATR NBP, *Neural Basis of Perception*). À chaque essai, le sujet fixe un point central et porte son attention **à gauche ou à droite** sans mouvement oculaire ; la tâche de décodage est donc **binaire**, et le niveau du hasard est **50 %**. Ce paradigme est associé, dans le journal de bord et les présentations du laboratoire, aux travaux de **Morioka et al. (2014)**, publiés dans *NeuroImage* par le groupe du professeur Ishii (décodage de l’attention spatiale à partir de courants corticaux estimés depuis l’EEG, avec une information a priori issue de la spectroscopie proche infrarouge). Je n’ai pas relu cet article en détail : je m’en tiens à ce que le laboratoire utilise opérationnellement — fenêtre d’attention de 8 s, deux classes, 43 sujets — sans extrapoler sur le protocole original.
 
 ### 4.1.2 Contenu brut
 

@@ -23,7 +23,7 @@ Le jeu utilisé in fine est un protocole d’**attention visuo-spatiale** gauche
 
 La tâche de classification est **binaire** (gauche vs droite). Le niveau de hasard est donc **50 %**, contrairement à BCI-IV-2a (4 classes, hasard 25 %). C’est un point de confusion fréquent : un 26 % sur BCI-IV-2a est un échec ; un 62 % sur l’attention spatiale est un signal clair au-dessus de 50 %.
 
-Le paradigme est associé dans le journal et les présentations à **Morioka et al., 2014**. Le PDF complet n’est pas nécessairement sur ce PC ; je n’invente pas les détails du papier original au-delà de ce que le labo utilise opérationnellement (fenêtre d’attention 8 s, deux classes, 43 sujets).
+Le paradigme est associé dans le journal et les présentations à **Morioka et al., 2014** (*NeuroImage*, groupe du professeur Ishii). Je n’ai pas étudié cet article en détail et je n’extrapole pas sur le protocole original au-delà de ce que le labo utilise opérationnellement (fenêtre d’attention 8 s, deux classes, 43 sujets).
 
 ## 2.4 Une mise en garde de lecture
 

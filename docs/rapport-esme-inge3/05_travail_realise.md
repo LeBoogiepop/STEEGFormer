@@ -4,7 +4,7 @@ Ce chapitre suit l’ordre chronologique du journal de bord. Les chiffres détai
 
 ## 5.1 Avril — Intégration et ligne POYO
 
-Dès l’arrivée (début avril), un MacBook Pro du laboratoire m’a été attribué. Ishii-sensei a présenté Liz Costato et la répartition des sujets. Les premiers documents de lecture (`EEG_STATE`, revue *EEG Foundation Models: A Critical Review…*) ont abouti, vers le 10 avril, à un **séminaire interne** sur l’état de l’art des FM EEG (LaBraM, BIOT, etc.).
+Dès l’arrivée (début avril), un MacBook Pro du laboratoire m’a été attribué. Ishii-sensei a présenté Liz Costato et la répartition des sujets. Le premier document de lecture, la revue *EEG Foundation Models: A Critical Review of Current Progress and Future Directions* (Kuruppu et al., 2026), a abouti, vers le 10 avril, à un **séminaire interne** sur l’état de l’art des FM EEG (LaBraM, BIOT, etc.).
 
 En parallèle, j’ai cloné **torch_brain** (Azabou et al., POYO, NeurIPS 2023) pour comprendre la ligne de Liz. Sous Windows (Python 3.10, venv), j’ai installé `torch_brain[dev]`, Lightning, Weights & Biases, et **brainsets** depuis GitHub (la version PyPI minimale ne convenait pas au dataset Perich–Miller). Plusieurs correctifs locaux ont été nécessaires : fichier Hydra `train.yaml` manquant, `recording_ids` optionnel, callback `MemInfo` qui appelait `cat /proc/meminfo` (Linux) et faisait échouer Windows, workers Ray. Un premier forward POYO (~11,9 M de paramètres) a produit une *train_loss* ; les *epochs* CPU étaient trop lentes pour un entraînement complet, ce qui était acceptable en phase d’installation.
 

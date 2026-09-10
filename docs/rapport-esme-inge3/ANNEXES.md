@@ -139,8 +139,7 @@ Détail des plis LOO : A01 26,12 % · A02 25,39 % · A03 24,88 % · A04 25,08 % 
 
 ## Annexe I — Éléments à compléter avant dépôt
 
-- Référence complète de Morioka et al. (2014) et de la revue *Critical Review* (PDF absents de la machine de rédaction).
 - Canevas de page de garde et logos officiels de l’école, non disponibles sur ce poste.
-- LOSO agrégé **déjà disponible** (41 plis, 53,55 % ± 3,20 %) — à relire avec Cuong avant dépôt.
-- LDA recalculée sur les 43 sujets, si le temps le permet (coût négligeable).
-- Figures à produire : schéma comparatif des conversions v1/v2 et courbe d’apprentissage du run population.
+- Visa du laboratoire (Cuong / Ishii-sensei) sur la version finale, exigé par l’école avant dépôt.
+- LDA recalculée sur les 43 sujets, si le temps le permet (coût négligeable) ; la valeur citée (55,7 %) porte sur 8 sujets.
+- Figure optionnelle : courbe d’apprentissage du run population (les valeurs sont données en annexe F).

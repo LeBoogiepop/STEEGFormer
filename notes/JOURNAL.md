@@ -15,7 +15,16 @@ Fait dans `docs/rapport-esme-inge3/` :
 - DOCX + PDF régénérés (54 p., ~21 200 mots), TOC via Word COM (pywin32 absent → PowerShell).
 - Slides soutenance : `presentations/ST-EEGFormer_soutenance_ESME_2026-09-21_architectures.pptx` (3 slides, notes FR) via `pptx_build/build_defense_0921.js`.
 
-À confirmer avec Liz : codebook 8 192 / masque 50 % de LaBraM (cités d'après l'article, code de pré-entraînement absent du dépôt).
+**Audit du soir (complétude / sources)** :
+- LaBraM 8 192 × 64 codes, masque 0,5, ~2 500 h, 5,8 M / 46 M / 369 M → **confirmés dans l'article ICLR 2024** (tables 3–4). Plus rien « à confirmer ».
+- ST-EEGFormer : 0,1–64 Hz, 128 Hz, z-score, fenêtres 6 s / pas 0,5 s, 142 électrodes, 16 × A100-80 Go, 32 614 h-GPU, masque 0,75 → confirmés dans `STEEGFormer.pdf` (annexes E).
+- Chiffres ch. 5–6 recroisés avec le JOURNAL complet de `torch-brain-eeg` (récupéré via `gh api`, 38 sections avril→sept.) : tous présents.
+- `EGG_STATE.pdf` (racine POUR LE STAGE) = la revue *Critical Review* elle-même (Kuruppu, Wagh, Kremen & Varatharajah, *J. Neural Eng.* 23, 021001, 2026) — le rapport disait à tort qu'elle était absente. Corrigé ch. 3, 5, biblio.
+- Morioka et al. 2014 = *NeuroImage* 90:128–139, doi 10.1016/j.neuroimage.2013.12.035 (Ishii dernier auteur). Corrigé ch. 2, 4, biblio.
+- BIBLIO : 32 entrées, **toutes avec DOI / arXiv / dépôt**, chaque lien résolu (HTTP ou Crossref). Azabou 2025 (ICLR, OpenReview `IuU0wcO0mo`), CalM / CAPT (Xu, Zhang, Zhang, Tsinghua), POCO (Duan et al., NeurIPS 2025), MNE ajoutés.
+- Cadre ESME (mail scolarité + infos clés mars 2026, wiki) : pas de consignes de rédaction, barème = grille Romanet ; rapport « visé par l'entreprise » → visa Cuong/Ishii à obtenir avant le 14/09.
+- DOCX/PDF régénérés : **55 p., ~21 700 mots** (avec garde, TOC, biblio, annexes).
+- **Reste à faire : deck soutenance 20 min complet** (les 3 slides architecture ne sont qu'un bloc).
 
 Réunion Liz du 9 sept. : recap des constats du 2 sept. (deck `ST-EEGFormer_Liz_meeting_2026-09-09_PRESENT.pptx`). Tests EA / CSD / artefacts toujours **non exécutés** sur mnode.
 

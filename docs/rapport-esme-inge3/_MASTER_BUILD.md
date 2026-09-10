@@ -2,9 +2,6 @@
 lang: fr
 ---
 
-> **Copie concaténée du 20/08/2026 — périmée pour le LOSO.**  
-> Éditer les chapitres `01_*.md` … `08_*.md`. Mean LOSO à jour : **53,55 % ± 3,20 %** (41 plis, 2 sept.).
-
 **ESME Sudria** — Diplôme d’ingénieur, 5e année, majeure 3TD  
 **Kyoto University** — Graduate School of Informatics, Ishii Laboratory
 
@@ -28,13 +25,13 @@ lang: fr
 
 ## Résumé
 
-Ce stage de six mois au laboratoire Ishii (Kyoto) a consisté à évaluer un *foundation model* EEG, **ST-EEGFormer** (Yang et al., ICLR 2026), sur des enregistrements d’attention spatiale du laboratoire (jeu ATR / NBP, paradigme de type Morioka, 43 sujets, 2 classes gauche/droite). Le travail a d’abord porté sur la mise en place d’un environnement de recherche (revue de littérature, pipeline POYO/torch_brain sur la ligne de ma collègue Liz Costato), puis sur le choix et l’adaptation du benchmark ST-EEGFormer. Un premier essai de reproduction de la figure G.2 du papier sur BCI Competition IV-2a s’est révélé non informatif (performances au niveau du hasard). Le pivot vers les données de laboratoire a mis au jour un défaut de conversion (prétraitement absent, fenêtre trop courte). Après alignement sur le pipeline LaBraM de Liz, une LDA simple atteint 55,7 % ; ST-EEGFormer, une fois les hyperparamètres d’adaptation débridés, atteint **61,66 %** en protocole population, au niveau de LaBraM (~62 %). Un protocole *leave-one-subject-out* a été lancé sur le cluster du laboratoire ; **aucun mean agrégé n’est reporté** tant que l’ensemble des plis n’est pas terminé. Le rapport documente le diagnostic d’ingénierie autant que ce résultat chiffré.
+Ce stage de six mois au laboratoire Ishii (Kyoto) a consisté à évaluer un *foundation model* EEG, **ST-EEGFormer** (Yang et al., ICLR 2026), sur des enregistrements d’attention spatiale du laboratoire (jeu ATR / NBP, paradigme de type Morioka, 43 sujets, 2 classes gauche/droite). Le travail a d’abord porté sur la mise en place d’un environnement de recherche (revue de littérature, pipeline POYO/torch_brain sur la ligne de ma collègue Liz Costato), puis sur le choix et l’adaptation du benchmark ST-EEGFormer. Un premier essai de reproduction de la figure G.2 du papier sur BCI Competition IV-2a s’est révélé non informatif (performances au niveau du hasard). Le pivot vers les données de laboratoire a mis au jour un défaut de conversion (prétraitement absent, fenêtre trop courte). Après alignement sur le pipeline LaBraM de Liz, une LDA simple atteint 55,7 % ; ST-EEGFormer, une fois les hyperparamètres d’adaptation débridés, atteint **61,66 %** en protocole population, au niveau de LaBraM (~62 %). Un protocole *leave-one-subject-out* mené sur le cluster du laboratoire (41 plis terminés au 2 septembre 2026) donne **53,55 % ± 3,20 %** après calibration sur le sujet exclu : le transfert vers un sujet jamais vu reste la difficulté centrale. Le rapport décrit en détail l’architecture et l’algorithme des deux modèles de fondation comparés, analyse les leviers d’amélioration possibles, et documente le diagnostic d’ingénierie autant que ces résultats chiffrés.
 
 **Mots-clés :** EEG, foundation models, ST-EEGFormer, attention spatiale, BCI, MAE, transfer inter-sujets.
 
 ## Abstract
 
-This six-month internship at the Ishii Laboratory (Kyoto University) evaluated the EEG foundation model **ST-EEGFormer** (Yang et al., ICLR 2026) on a laboratory spatial-attention dataset (ATR/NBP, 43 subjects, left/right, 8 s epochs). After an initial literature review and a POYO/torch_brain setup, an attempt to reproduce the paper’s Figure G.2 on BCI-IV-2a remained at chance. Switching to in-house data revealed a conversion bug (missing preprocessing, 2 s instead of 8 s windows). Once aligned with the LaBraM pipeline, LDA reached 55.7 % and ST-EEGFormer reached **61.66 %** under a population protocol, matching LaBraM (~62 %). A leave-one-subject-out evaluation is running on the lab cluster; **no aggregated LOSO mean is reported** until all folds complete.
+This six-month internship at the Ishii Laboratory (Kyoto University) evaluated the EEG foundation model **ST-EEGFormer** (Yang et al., ICLR 2026) on a laboratory spatial-attention dataset (ATR/NBP, 43 subjects, left/right, 8 s epochs). After an initial literature review and a POYO/torch_brain setup, an attempt to reproduce the paper’s Figure G.2 on BCI-IV-2a remained at chance. Switching to in-house data revealed a conversion bug (missing preprocessing, 2 s instead of 8 s windows). Once aligned with the LaBraM pipeline, LDA reached 55.7 % and ST-EEGFormer reached **61.66 %** under a population protocol, matching LaBraM (~62 %). A leave-one-subject-out evaluation on the lab cluster (41 folds completed on 2 September 2026) yields **53.55 % ± 3.20 %** after calibration on the held-out subject, showing that cross-subject transfer remains the central difficulty. The report details the architecture and training algorithm of both foundation models, analyses possible improvement levers, and documents the engineering diagnosis alongside these figures.
 
 **Keywords:** EEG, foundation models, ST-EEGFormer, spatial attention, BCI, MAE, cross-subject transfer.
 
@@ -106,13 +103,13 @@ Objectifs que je me suis fixés, dans l’ordre où ils se sont clarifiés, avec
 | 2 | Choisir un modèle implémentable — code, poids, licence — et son comparateur | décision documentée : ST-EEGFormer contre LaBraM |
 | 3 | Rendre le benchmark **exécutable** hors de son environnement HPC d’origine | pipeline fonctionnel sous Windows, macOS puis Slurm |
 | 4 | Obtenir un chiffre **population** honnête sur les données du laboratoire, avec baseline LDA et comparaison LaBraM | tableau comparatif à prétraitement identique |
-| 5 | Lancer un protocole **leave-one-subject-out** (LOSO) | travail Slurm 43 plis, avec la règle : **aucune moyenne tant que tous les plis ne sont pas terminés** |
+| 5 | Lancer un protocole **leave-one-subject-out** (LOSO) | **41/41** plis `COMPLETED` (2 sept. 2026) ; mean finetune **53,55 % ± 3,20 %** |
 
 Ce rapport d’ingénieur documente autant les **échecs méthodologiques** — BCI-IV-2a au niveau du hasard, conversion initiale sans prétraitement, hyperparamètres qui empêchaient l’apprentissage — que le résultat population du 6 juillet 2026. Un rapport de stage n’est pas un article ICLR : l’apport principal est la **chaîne** données → modèle → diagnostic → chiffre comparable, et la capacité à dire ce que ce chiffre ne prouve pas.
 
 ## 1.5 Organisation du rapport
 
-Le chapitre 2 situe le laboratoire, son organisation, la tâche BCI et le paradigme d’attention spatiale, et traite la dimension de responsabilité sociétale et environnementale du travail mené. Le chapitre 3 présente l’état de l’art, du décodage classique aux modèles de fondation, et positionne précisément le sujet. Le chapitre 4 détaille les méthodes : données, prétraitement, adaptation du modèle, protocoles et infrastructure. Le chapitre 5 retrace le travail réalisé mois par mois, échecs compris. Le chapitre 6 donne les résultats, **en protocole population uniquement**. Le chapitre 7 discute les limites, les retours du laboratoire et les perspectives, et prend du recul sur la démarche. Le chapitre 8 conclut et énonce les compétences acquises.
+Le chapitre 2 situe le laboratoire, son organisation, la tâche BCI et le paradigme d’attention spatiale, et traite la dimension de responsabilité sociétale et environnementale du travail mené. Le chapitre 3 présente l’état de l’art, du décodage classique aux modèles de fondation, décrit pas à pas l’architecture et l’algorithme d’apprentissage des deux modèles comparés — ST-EEGFormer et LaBraM — et positionne précisément le sujet. Le chapitre 4 détaille les méthodes : données, prétraitement, adaptation du modèle, protocoles et infrastructure. Le chapitre 5 retrace le travail réalisé mois par mois, échecs compris. Le chapitre 6 donne les résultats (population **et** LOSO terminé). Le chapitre 7 discute les limites, les retours du laboratoire et les perspectives, analyse levier par levier comment ces algorithmes pourraient être améliorés, et prend du recul sur la démarche. Le chapitre 8 conclut et énonce les compétences acquises.
 
 Deux conventions de lecture, utiles pour éviter les contresens les plus fréquents sur ce travail :
 
@@ -189,7 +186,7 @@ Le domaine dans lequel s’inscrit ce stage est intrinsèquement coûteux en én
 |---|---|---|
 | Runs BCI-IV-2a : population 100 epochs à ~3 h/epoch, puis LOO 9 plis × 150 epochs | plusieurs centaines d’heures·GPU | validation de l’infrastructure ; **aucun résultat exploitable** (niveau du hasard) |
 | Run population 43 sujets, 50 epochs à ~55 min/epoch | de l’ordre de 45 h·GPU | le résultat principal du stage |
-| LOSO 43 plis (50 + 30 epochs par pli) | environ **un pli par jour** sur GPU dédiée, soit plusieurs semaines de calcul continu | en cours |
+| LOSO 41 plis (50 + 30 epochs par pli) | environ **un pli par jour** sur GPU dédiée, soit plusieurs semaines de calcul continu (juillet → 2 septembre) | 53,55 % ± 3,20 % : la mesure du transfert inter-sujets |
 | Sonde linéaire, encodeur gelé (2 050 paramètres entraînables) | ~21 s/epoch, ~1,8 Go de mémoire GPU | diagnostic rapide |
 
 Le contraste de la dernière ligne est instructif : entre une sonde linéaire et un fine-tuning complet, le coût varie de plus de deux ordres de grandeur pour une même question posée aux données. Une part importante de la sobriété consiste simplement à **choisir le protocole le moins cher qui réponde à la question**.
@@ -286,33 +283,52 @@ Le titre est une question, et c’est la contribution principale : **les modèle
 
 **ST-EEGFormer** (*spatiotemporal EEGFormer*) est introduit dans ce cadre non comme l’architecture ultime, mais comme un **témoin volontairement simple**. L’enjeu est explicite : LaBraM avait avancé que l’auto-encodage masqué sur EEG brut ne converge pas correctement, ce qui justifiait des objectifs de pré-entraînement plus élaborés. Si un ViT pré-entraîné uniquement par MAE sur le signal brut se révèle compétitif après fine-tuning, cette justification tombe.
 
-### 3.4.2 Architecture
+### 3.4.2 L’idée en une phrase, puis l’architecture
 
-L’architecture suit la recette **ViT** (Dosovitskiy et al., 2021), transposée au signal.
+L’idée de ST-EEGFormer se résume ainsi : **traiter un enregistrement EEG comme une image dont les « pixels » sont de courts morceaux de signal**, et appliquer sans modification la recette **ViT** (Dosovitskiy et al., 2021) — découper, projeter linéairement, ajouter une information de position, empiler des blocs d’auto-attention. Rien, dans le modèle, n’est spécifique à l’EEG en dehors du découpage et du codage de position. Tout ce qui suit est lu dans le code du dépôt (`benchmark/neural_networks/models/models_vit_eeg.py`), et la figure 2.1 (panneau b) en donne le schéma d’ensemble ; la figure 3.2 (§ 3.5) le met en regard de LaBraM sur nos données.
 
-- **Découpage en patches spatio-temporels.** Chaque *token* est un court segment temporel d’**un seul canal**. Dans le code (`PatchEmbedEEG`, `benchmark/neural_networks/models/models_vit_eeg.py`), c’est un `torch.nn.Unfold` de noyau et de pas 16 échantillons — donc des patches **non recouvrants** — suivi d’un `nn.Linear(16, embed_dim)`. À 128 Hz, un patch représente 125 ms d’un canal. **Il n’y a ni dictionnaire, ni recherche du plus proche voisin, ni indice discret** : c’est un plongement continu.
-- **Deux encodages positionnels.** Un encodage **temporel** sinusoïdal (`TemporalPositionalEncoding`, comme dans le Transformer original) indique *quand* ; un plongement **spatial appris** (`ChannelPositionalEmbed`, table `nn.Embedding(145, embed_dim)`) indique *quelle électrode*. Un *token* de classe est ajouté en tête, comme dans un ViT.
-- **Attention plate canal × temps.** Tous les patches, toutes électrodes et tous instants confondus, forment **une seule séquence**. L’auto-attention est celle d’un ViT standard, non causale : un patch du canal C3 à t = 1 s peut attendre un patch de Oz à t = 3 s. Attention inter-canaux et attention temporelle vivent donc dans **le même softmax** ; il n’y a pas de bloc « axe des canaux » séparé.
-- **Trois tailles**, définies dans le code : *small* (dimension 512, 8 blocs, 8 têtes), *base* (768, 12, 12) et *large* (1024, 24, 16), toutes avec des patches de 16 échantillons. La variante *large*, celle que nous utilisons, dépasse 300 millions de paramètres (environ 302 M mesurés dans nos journaux d’exécution).
+**Étape 1 — Le découpage (*patchify*).** Le signal d’entrée est une matrice `canaux × temps`. Chaque canal est coupé en segments consécutifs de **16 échantillons**, sans recouvrement (`torch.nn.Unfold`, noyau 16, pas 16). Un segment d’**un seul canal** sur 16 échantillons est un *patch* ; à 128 Hz, il dure **125 ms**. Sur notre fenêtre de 8 s à 64 canaux, rééchantillonnée à 128 Hz (§ 4.3), cela donne 64 patches par canal, soit **64 × 64 = 4 096 patches**.
 
-### 3.4.3 Le pré-entraînement : MAE, et rien d’autre
+**Étape 2 — Le plongement (*embedding*).** Chaque patch de 16 valeurs est projeté par **une seule couche linéaire** (`nn.Linear(16, D)`) en un vecteur de dimension *D* (1 024 pour la variante *large*). **Il n’y a ni dictionnaire, ni recherche du plus proche voisin, ni indice discret** : le vecteur est une fonction linéaire continue des 16 amplitudes. C’est ce que nous appelons « représentation continue ».
 
-Le pré-entraînement est un **auto-encodeur masqué** (MAE, He et al., 2022) :
+**Étape 3 — Dire au modèle *quand* et *où*.** Un transformeur ne sait rien de l’ordre de ses entrées ; il faut le lui ajouter. Deux vecteurs sont sommés à chaque plongement :
 
-1. 75 % des *tokens* sont masqués aléatoirement ;
-2. l’encodeur ne voit **que** les *tokens* visibles ;
-3. les *tokens* masqués sont réinsérés à leur position, avec leurs encodages positionnels ;
-4. un décodeur plus léger (512 dimensions, 8 blocs dans le code) traite la séquence complète ;
-5. une couche `nn.Linear(decoder_dim, patch_size)` prédit les **16 valeurs d’échantillons** de chaque patch ;
-6. la perte est l’**erreur quadratique moyenne** entre patches prédits et patches vrais, **moyennée uniquement sur les patches masqués** (`forward_loss`, `pretrain/models_mae_eeg.py`).
+- un **codage temporel sinusoïdal** (`TemporalPositionalEncoding`, formule du Transformer original, non appris), indexé par le numéro du patch dans la fenêtre : *quand* ;
+- un **plongement d’électrode appris** (`ChannelPositionalEmbed`, table `nn.Embedding(145, D)`), indexé par l’identifiant de l’électrode : *où*. Les 145 emplacements couvrent les 142 électrodes distinctes vues au pré-entraînement. C’est ce plongement qui rend nécessaire la traduction de nos noms d’électrodes en indices (§ 4.3).
 
-Autrement dit, la cible d’apprentissage est le signal lui-même — des amplitudes — et non un indice de dictionnaire. C’est la différence de fond avec LaBraM, et la raison pour laquelle l’analogie avec les modèles d’imagerie calcique du laboratoire (§ 3.6) fonctionne.
+Un **token de classe** (`[CLS]`) est ajouté en tête de séquence, comme dans un ViT.
 
-Le coût de ce pré-entraînement est documenté par les auteurs, ce qui est rare et directement exploitable pour la section RSE du chapitre 2 : plus de **8 millions de segments EEG** issus d’une douzaine de jeux publics et d’un jeu interne, fenêtres de **6 s** avec pas de 0,5 s, prétraitement minimal (notch, passe-bande 0,1–64 Hz, rééchantillonnage à **128 Hz**, standardisation par canal), couverture de **142 électrodes distinctes**, 400 epochs sur une configuration de **16 GPU A100-80 Go**, pour un total déclaré de **32 614 heures·GPU**.
+**Étape 4 — L’encodeur : une attention « plate » canal × temps.** Les 4 096 patches, toutes électrodes et tous instants confondus, forment **une seule séquence** de 4 097 tokens (avec `[CLS]`). L’encodeur est une pile de blocs Transformer standard (auto-attention multi-têtes puis perceptron, avec normalisations et connexions résiduelles), non causale : un patch de C3 à *t* = 1 s peut attendre un patch de Oz à *t* = 3 s. Attention inter-canaux et attention temporelle vivent dans **le même softmax** ; il n’y a pas de bloc « axe des canaux » séparé, ni de biais structurel imposant une localité. Trois tailles sont définies dans le code :
 
-### 3.4.4 L’adaptation aval
+| Variante | *D* | Blocs | Têtes | Patch |
+|---|---:|---:|---:|---:|
+| small | 512 | 8 | 8 | 16 |
+| base | 768 | 12 | 12 | 16 |
+| **large** (utilisée ici) | **1 024** | **24** | **16** | 16 |
 
-Au fine-tuning, le décodeur MAE est **jeté** ; seul l’encodeur est conservé. Il n’y a plus de masquage : la séquence complète est encodée, les *tokens* sont fusionnés (par moyenne, choix par défaut de ST-EEGFormer, les auteurs montrant en annexe que le *token* de classe seul fait moins bien) et une tête linéaire produit la classe ou la valeur régressée.
+La variante *large* compte environ **302 millions de paramètres** (valeur relevée dans nos journaux d’exécution). Le coût de l’attention étant quadratique en nombre de tokens, la longueur 4 097 est ce qui dicte la mémoire GPU (§ 4.5).
+
+### 3.4.3 L’algorithme de pré-entraînement : un auto-encodeur masqué, et rien d’autre
+
+Le pré-entraînement est un **auto-encodeur masqué** (MAE, He et al., 2022) appliqué au signal brut. La boucle d’apprentissage, lue dans `pretrain/models_mae_eeg.py`, est la suivante :
+
+1. **Plonger** tous les patches (étapes 1–3 ci-dessus).
+2. **Masquer** aléatoirement **75 %** des patches (`mask_ratio = 0.75`), tirage indépendant pour chaque exemple : on mélange les positions et l’on ne garde que le premier quart.
+3. **Encoder** uniquement les 25 % visibles avec l’encodeur complet — c’est ce qui rend le MAE économique, l’encodeur ne voyant jamais les patches masqués.
+4. **Réinsérer** les positions masquées sous la forme d’un **vecteur `mask_token` appris**, identique pour toutes, puis ré-additionner à chaque position ses codages temporel et d’électrode (le décodeur possède ses propres tables).
+5. **Décoder** la séquence complète avec un décodeur plus **léger** (*D* = 512, 8 blocs pour *base* et *large*).
+6. **Prédire** pour chaque position les **16 valeurs d’amplitude** du patch (`nn.Linear(512, 16)`).
+7. **Pénaliser** par l’**erreur quadratique moyenne** (MSE) entre patch prédit et patch vrai, calculée **uniquement sur les patches masqués** (`(loss * mask).sum() / mask.sum()`). Une option de normalisation du patch cible existe (`norm_pix_loss`) mais est désactivée par défaut.
+
+La cible d’apprentissage est donc **le signal lui-même**, en amplitudes, et non un indice de dictionnaire. C’est la différence de fond avec LaBraM (§ 3.5), et la raison pour laquelle l’analogie avec les modèles d’imagerie calcique du laboratoire (§ 3.6) fonctionne. C’est aussi ce qui a fait réagir le professeur Ishii le 19 août 2026 : une MSE sur des amplitudes est dominée par l’énergie basse fréquence et les décalages de ligne de base, pas par la structure temporelle fine (chapitre 7).
+
+Le coût de ce pré-entraînement est documenté par les auteurs, ce qui est rare et directement exploitable pour la section RSE du chapitre 2 : plus de **8 millions de segments EEG** issus d’une douzaine de jeux publics et d’un jeu interne, fenêtres de **6 s** avec pas de 0,5 s, prétraitement minimal (notch, passe-bande 0,1–64 Hz, rééchantillonnage à **128 Hz**, standardisation par canal), couverture de **142 électrodes distinctes**, 400 epochs sur une configuration de **16 GPU A100-80 Go**, pour un total déclaré de **32 614 heures·GPU**. Une fenêtre de pré-entraînement représente 6 × 128 / 16 = 48 patches par canal ; notre fenêtre aval de 8 s en représente 64, dans les limites du codage temporel (512 positions).
+
+### 3.4.4 L’adaptation aval (fine-tuning)
+
+Au fine-tuning, le décodeur MAE et le `mask_token` sont **jetés** ; seul l’encodeur est conservé et initialisé avec les poids pré-entraînés. Il n’y a plus de masquage : la séquence complète est encodée, les 4 096 tokens de sortie sont **moyennés** (`global_pool`, le `[CLS]` étant exclu de la moyenne) et une **tête linéaire** unique produit la classe (ici 2 sorties) ou la valeur régressée. La moyenne est le choix par défaut des auteurs, qui montrent en annexe que le `[CLS]` seul fait moins bien. Tous les poids — plongement, 24 blocs, tête — sont mis à jour, avec un taux d’apprentissage éventuellement décroissant vers les couches d’entrée (`layer_decay`, § 4.6).
+
+En sonde linéaire (*linear probing*), seule la tête est apprise ; l’encodeur est gelé.
 
 Deux mises en garde du papier ont directement servi ce stage. D’abord, **la sonde linéaire est faible presque partout** : les représentations pré-entraînées ne sont pas prêtes à l’emploi, sauf sur une tâche facile de détection (ERN) où elles saturent. Ensuite, les auteurs pointent des **facteurs cachés d’implémentation** : certains modèles utilisent des têtes multi-couches tout en annonçant du *linear probing* — la capacité est alors dissimulée dans la tête — et la stratégie de fusion des *tokens* change le champ réceptif effectif. Comparer deux dorsales exige donc de standardiser la tête ; c’est l’une des contributions de loyauté du benchmark.
 
@@ -358,18 +374,72 @@ Quatre conclusions en découlent, et elles ont servi de fil rouge à tout le sta
 
 ## 3.5 LaBraM, le contrepoint discret
 
-**LaBraM** (Jiang et al., 2024) est la ligne suivie en parallèle par Liz Costato, ce qui en fait le point de comparaison naturel de ce stage. Sa mécanique est en deux étapes : un **tokeniseur neuronal** quantifie chaque patch, canal par canal, en un code discret issu d’un dictionnaire appris ; un transformeur est ensuite pré-entraîné à prédire les codes masqués à partir de leur contexte — schéma directement inspiré de la modélisation de langue masquée. Les modèles publiés ont été pré-entraînés sur environ 2 500 heures d’EEG issues d’une vingtaine de jeux ; c’est le point de contrôle `labram-base` qui est utilisé au laboratoire.
+**LaBraM** (*Large Brain Model*, Jiang, Zhao & Lu, ICLR 2024) est la ligne suivie en parallèle par Liz Costato, ce qui en fait le point de comparaison naturel de ce stage. Le dépôt ST-EEGFormer en embarque une copie du code d’encodeur (`benchmark/neural_networks/models/labram.py`, adapté du dépôt officiel, lui-même dérivé de BEiT-v2) afin de l’évaluer dans les mêmes conditions ; c’est cette copie qui est lue ci-dessous, complétée par l’article pour la partie pré-entraînement, absente du dépôt. Le point de contrôle utilisé au laboratoire est `labram-base`.
 
-Le contraste avec ST-EEGFormer se résume en quatre lignes.
+L’idée de LaBraM en une phrase : **traiter l’EEG comme un texte**, dont il faut d’abord apprendre le vocabulaire — un dictionnaire fini de « mots » de signal — avant de pré-entraîner un transformeur à deviner les mots manquants, exactement comme un modèle de langue masqué.
 
-| | ST-EEGFormer | LaBraM |
+### 3.5.1 Architecture de l’encodeur
+
+**Étape 1 — Découpage.** L’entrée est rééchantillonnée à **200 Hz** (fréquence native du modèle ; `model_downstream_task_fs = 200` dans `util/utils.py`) puis coupée, canal par canal, en patches de **200 échantillons, soit 1 s**. Sur notre fenêtre de 8 s à 64 canaux : 8 patches par canal, **64 × 8 = 512 patches** — huit fois moins que ST-EEGFormer, avec des patches huit fois plus longs.
+
+**Étape 2 — Plongement par convolutions.** Là où ST-EEGFormer projette linéairement, LaBraM applique à chaque patch un petit **encodeur temporel convolutif** (`TemporalConv`) : une convolution de noyau 15 et de pas 8, puis deux convolutions de noyau 3, chacune suivie d’une normalisation de groupe et d’une activation GELU. Les 8 cartes de sortie de 25 échantillons sont aplaties en un vecteur de **200** dimensions. Le plongement est donc non linéaire et appris, mais reste **continu** à ce stade — la discrétisation n’intervient qu’au pré-entraînement (§ 3.5.2).
+
+**Étape 3 — *Quand* et *où*, tous deux appris.** Deux tables apprises sont ajoutées : un **plongement d’électrode** (`pos_embed`, 128 emplacements + 1 pour `[CLS]`), indexé par la position de l’électrode dans la liste standard 10-20 étendue du dépôt, et un **plongement temporel** (`time_embed`, 16 emplacements, soit jusqu’à 16 s de fenêtre). Contrairement à ST-EEGFormer, le codage temporel n’est pas sinusoïdal mais appris. Un `[CLS]` est ajouté.
+
+**Étape 4 — Encodeur.** Une pile de blocs Transformer standard, en attention plate sur la séquence canal × temps (513 tokens sur nos données), avec deux raffinements hérités de BEiT-v2 : une normalisation des requêtes et des clés (*qk-norm*) et des facteurs d’échelle appris par bloc (*layer scale*). Trois tailles sont définies :
+
+| Variante | *D* | Blocs | Têtes | Paramètres (papier) |
+|---|---:|---:|---:|---:|
+| **base** (utilisée au laboratoire) | **200** | **12** | **10** | ≈ 5,8 M |
+| large | 400 | 24 | 16 | ≈ 46 M |
+| huge | 800 | 48 | 16 | ≈ 369 M |
+
+Le contraste de taille est frappant : `labram-base` compte **cinquante fois moins de paramètres** que ST-EEGFormer-large, et traite huit fois moins de tokens.
+
+### 3.5.2 L’algorithme de pré-entraînement : d’abord un vocabulaire, ensuite un modèle de langue
+
+Le pré-entraînement se fait en **deux temps**, décrits dans l’article (le code correspondant n’est pas dans le dépôt de ce stage).
+
+**Temps 1 — Apprendre le tokeniseur neuronal (quantification vectorielle).** Un premier réseau apprend un **dictionnaire** (*codebook*) de plusieurs milliers de vecteurs (8 192 dans la configuration publiée). Chaque patch de 1 s est plongé, puis **remplacé par le vecteur du dictionnaire le plus proche** ; le patch devient un **indice entier**. Pour que ces indices portent de l’information, un décodeur doit pouvoir reconstruire quelque chose du patch à partir du code. Le choix de LaBraM est déterminant : la cible n’est **pas le signal brut**, mais son **spectre de Fourier — amplitude et phase**. Les auteurs justifient ce choix par la difficulté à faire converger une reconstruction directe d’EEG brut, jugé trop bruité ; c’est précisément l’affirmation que ST-EEGFormer vient contester (§ 3.4.1).
+
+**Temps 2 — Modélisation d’EEG masqué (*masked EEG modeling*).** Le tokeniseur est ensuite gelé et sert d’oracle. Pour chaque fenêtre : (1) tous les patches sont convertis en indices par le tokeniseur ; (2) **50 %** des patches sont masqués en entrée du transformeur ; (3) le transformeur, à partir du contexte visible, **prédit l’indice** du code de chaque patch masqué ; (4) la perte est une **entropie croisée** sur ces indices, comme un problème de classification à 8 192 classes. Le transformeur n’a donc jamais à produire une amplitude : il apprend à prédire *quel mot du vocabulaire* manque, pas *quelle forme d’onde*.
+
+Les modèles publiés ont été pré-entraînés sur environ **2 500 heures** d’EEG issues d’une vingtaine de jeux publics, avec un prétraitement proche du nôtre (passe-bande 0,1–75 Hz, notch, rééchantillonnage à 200 Hz) — ce qui explique que le pipeline de conversion « v2 » du chapitre 4, aligné sur celui de Liz, convienne aux deux modèles.
+
+### 3.5.3 L’adaptation aval
+
+Au fine-tuning, LaBraM fait **la même chose** que ST-EEGFormer : le tokeniseur et l’objectif de pré-entraînement sont abandonnés, l’encodeur est conservé, les tokens de sortie sont **moyennés** (`use_mean_pooling = True`, suivi d’une normalisation) et une **tête linéaire** produit la classe. La partie discrète de LaBraM ne sert qu’au pré-entraînement ; en aval, les deux modèles sont deux encodeurs continus surmontés d’une couche linéaire. C’est ce qui rend la comparaison du chapitre 6 loyale, et ce qui donne son sens à la quatrième conclusion de Yang et al. : *si le fine-tuning efface l’essentiel de la spécialisation acquise au pré-entraînement, la nature de cet objectif — continu ou discret — cesse d’être discriminante*.
+
+### 3.5.4 Les deux modèles point à point
+
+![Architectures comparées sur nos données](figures/fig_architectures_comparees.png)
+
+**Figure 3.2.** ST-EEGFormer-large et LaBraM-base, étape par étape, sur une même fenêtre de 8 s à 64 canaux. En rouge, la seule étape où les deux modèles diffèrent fondamentalement : l’objectif de pré-entraînement. Valeurs lues dans le code du dépôt.
+
+| | ST-EEGFormer-large | LaBraM-base |
 |---|---|---|
-| Représentation | patches **continus** (Unfold + Linear) | **tokens discrets** (quantification vectorielle) |
-| Objectif auto-supervisé | MSE sur les échantillons masqués | prédiction des codes masqués |
-| Attention | un ViT plat sur la séquence canal × temps | transformeur sur tokens discrets |
+| Fréquence de travail | 128 Hz | 200 Hz |
+| Patch | 16 échantillons = 125 ms, un canal | 200 échantillons = 1 s, un canal |
+| Tokens pour 8 s × 64 canaux | 4 096 | 512 |
+| Plongement du patch | une couche linéaire | trois convolutions + GroupNorm + GELU |
+| Position temporelle | sinusoïdale, fixe | table apprise (16 s max) |
+| Identité de l’électrode | table apprise, 145 emplacements | table apprise, 128 emplacements |
+| Encodeur | 24 blocs, *D* = 1 024, ≈ 302 M param. | 12 blocs, *D* = 200, ≈ 5,8 M param. |
+| Représentation pré-entraînée | **continue** | **discrète** (indices d’un dictionnaire VQ) |
+| Cible de pré-entraînement | les 16 amplitudes du patch | l’indice du code du patch (dictionnaire appris sur le spectre de Fourier) |
+| Perte | MSE sur les patches masqués | entropie croisée sur les indices masqués |
+| Taux de masquage | 75 % | 50 % |
+| Données de pré-entraînement | > 8 M de segments de 6 s, 142 électrodes | ≈ 2 500 h, ≈ 20 jeux |
+| Aval | encodeur + moyenne des tokens + tête linéaire | identique |
 | Rang moyen après fine-tuning (Yang et al.) | 5,61 | 8,99 |
 
-Il faut lire ce tableau pour ce qu’il est : un classement **dans ce benchmark**. Le papier ne conclut pas que LaBraM est inutile, mais que la complexité supplémentaire d’un tokeniseur discret ne se traduit pas clairement par un gain aval **après fine-tuning**. Le fait que nos deux lignes de travail arrivent autour de 62 % sur la même tâche de laboratoire (chapitre 6) est cohérent avec cette lecture.
+Trois lectures de ce tableau.
+
+1. **Ce qui est identique** : la logique ViT (patch par canal, plongement, position, attention plate, moyenne, tête linéaire) et l’adaptation aval. Un lecteur qui comprend l’un comprend l’autre.
+2. **Ce qui diffère vraiment** : la *cible* du pré-entraînement. ST-EEGFormer fait une régression des amplitudes ; LaBraM fait une classification d’indices dont le dictionnaire encode le spectre. Les deux se disent « masqués » mais ne prédisent pas la même chose — c’est la confusion levée au § 3.3.
+3. **Ce qui diffère en échelle** : cinquante fois plus de paramètres et huit fois plus de tokens côté ST-EEGFormer, avec des patches huit fois plus courts. Ce sont deux régimes différents de résolution temporelle et de coût, ce qui compte pour la suite (chapitre 7) : améliorer l’un n’est pas nécessairement améliorer l’autre.
+
+Il faut lire la dernière ligne pour ce qu’elle est : un classement **dans le benchmark de Yang et al.** Le papier ne conclut pas que LaBraM est inutile, mais que la complexité supplémentaire d’un tokeniseur discret ne se traduit pas clairement par un gain aval **après fine-tuning**. Le fait que nos deux lignes de travail arrivent autour de 62 % sur la même tâche de laboratoire (chapitre 6) est cohérent avec cette lecture.
 
 ## 3.6 Un détour utile : les modèles de fondation en imagerie calcique
 
@@ -462,7 +532,7 @@ Trois protocoles du chapitre 3 ont été exercés sur les données du laboratoir
 |---|---|---|
 | **Population** | un seul modèle entraîné sur la réunion des ensembles d’apprentissage des 43 sujets, évalué sur la réunion des ensembles de test | résultat principal (chapitre 6) |
 | **Per-subject** | un modèle par sujet, évalué sur le test du même sujet | diagnostic d’optimisation |
-| **LOSO (LOO fine-tune)** | 43 plis : entraînement sur 42 sujets, puis adaptation et test sur le sujet exclu | lancé sur le cluster, **aucune moyenne reportée** |
+| **LOSO (LOO fine-tune)** | 41 plis dans l’arborescence actuelle (IDs absents, ex. 010) : entraînement sur les autres sujets, puis adaptation et test sur le sujet exclu | **terminé** (2 sept. 2026) ; mean finetune **53,55 % ± 3,20 %** |
 
 **Métrique.** La grandeur suivie est `test_whole_acc1`, l’exactitude top-1 sur l’ensemble du test agrégé. Elle est extraite des journaux JSON par le script `scripts/summarize_g2_json_logs.py`, qui parcourt l’arborescence de sortie, lit la dernière ligne JSON non vide de chaque journal, privilégie la phase de *finetune* lorsqu’elle existe, et calcule moyenne et écart-type **sur les plis effectivement terminés**. C’est cet outil qui rend la règle « pas de moyenne partielle » vérifiable plutôt que déclarative.
 
@@ -574,7 +644,7 @@ Le correctif d’entraînement : **`layer_decay 1.0`**, **`mix_up 0.0`**, *smoot
 
 ## 5.6 Mi-juillet – 23 juillet — Cluster, LOSO, séminaire
 
-L’accès Slurm n’était pas immédiat (`sbatch` absent tant que le module n’est pas chargé ; ancienne IP `10.229.63.172` hors service). À partir du 13 juillet : `mnode` + `module load slurm/23.02.7`. Test de fumée validé, travail LOSO soumis (`77622` sur `kng11`, puis suivi sous d’autres IDs dont `109704`). **Aucun mean n’est calculé** sur un sous-ensemble de plis.
+L’accès Slurm n’était pas immédiat (`sbatch` absent tant que le module n’est pas chargé ; ancienne IP `10.229.63.172` hors service). À partir du 13 juillet : `mnode` + `module load slurm/23.02.7`. Test de fumée validé, travail LOSO soumis (`77622` sur `kng11`, puis suivi sous d’autres IDs dont `109704`). Aucun mean n’est alors calculé sur un sous-ensemble de plis (règle tenue jusqu’au 2 septembre, § 5.10).
 
 Le **23 juillet**, séminaire / *progress talk* du laboratoire (~12–15 min) : population 61,7 % vs LaBraM ~62 % vs LDA 55,7 % ; LOSO présenté comme **en cours**. Retours : retrainer le backbone *from scratch*, plus de données, mieux rapporter la confiance ; Cuong : un **delta de quelques points** ouvrirait une trajectoire papier.
 
@@ -608,6 +678,18 @@ Le tableau ci-dessous récapitule les obstacles réellement rencontrés, leur na
 
 Outils employés au quotidien : Python 3.10/3.11, PyTorch, `timm`, MNE, scikit-learn, NumPy ; Git et GitHub pour un dépôt partagé avec ma collègue ; PowerShell et Bash pour l’orchestration ; `screen`, `nohup` et Slurm pour les runs longs ; `nvidia-smi` pour le suivi GPU ; Hydra et Lightning côté POYO ; `pptxgenjs` pour la génération scriptée des supports de présentation.
 
+## 5.10 Fin août – 2 septembre — LOSO terminé, comparaison Liz, VPN A100
+
+Le LOSO a été relancé après des interruptions (job mort, reprise par `COMPLETED`). Au **2 septembre 2026**, `find … -name COMPLETED | wc -l` donne **41**, y compris `leave_out_sub-059`. Le script `summarize_g2_json_logs.py` agrège **41** journaux avec métriques : mean **53,55 % ± 3,20 %** (`acc1_whole`, stade *finetune*). Le dossier `leave_out_sub-060` existe sans JSON. L’arborescence n’a pas 43 leave-out (IDs absents, ex. 010).
+
+Le même jour, comparaison per-sujet avec Liz (LaBraM), en mettant côte à côte les deux tableaux de résultats. Sujets durs communs aux deux pipelines : **004, 019, 020, 031, 046** (015 à regarder). C’est une observation de discussion, pas encore une analyse de corrélation formelle entre les deux modèles. Pistes proposées par Liz, **pas encore mesurées sur le ViT** : Euclidean Alignment, filtrage laplacien (CSD), rejet d’artefacts plus strict. Un script CSP+LDA a été préparé (`benchmark/spatial_attention/test_liz_preprocessing.py`).
+
+Accès **ATR A100** : certificats VPN reçus le 1er septembre (Sawada / TSG) ; connexion OK le 2 septembre depuis hors LAN ATR (`abi-dgx-a100.cns.atr.jp`, 8 × A100 40 Go, env conda `steeegformer`, PyTorch 2.6 + CUDA). Les `.pkl` restent sur **mnode** ; le VPN ATR n’ouvre pas `10.232.11.170`. Cuong a signalé une sous-utilisation probable des CPU alloués aux jobs Slurm (travail borné GPU, `num_workers` bas) — à régler avec Kubo-san avant le prochain `sbatch`.
+
+## 5.11 3 – 10 septembre — Rédaction, point avec Liz, recommandations de Cuong
+
+Semaine de déplacement (Okinawa) sans expérience nouvelle. Le **9 septembre**, courte réunion avec Liz pour reprendre ce qui avait été constaté ensemble le 2 septembre (sujets durs communs, pistes de prétraitement) et fixer la suite : exécuter d’abord les tests CSP+LDA sur mnode, puis un run population unique si un signe positif apparaît. Un rapport d’avancement court en anglais a été remis à Cuong la même semaine. Le **10 septembre**, Cuong a demandé pour ce rapport une description plus claire de l’architecture et de l’algorithme de ST-EEGFormer **et** de LaBraM, une réflexion approfondie sur les manières d’améliorer ces algorithmes, et des figures de modèles pour la soutenance : c’est l’origine des § 3.4–3.5, du § 7.7 et de la figure 3.2 dans leur forme actuelle.
+
 
 ```{=openxml}
 <w:p><w:r><w:br w:type="page"/></w:r></w:p>
@@ -615,7 +697,7 @@ Outils employés au quotidien : Python 3.10/3.11, PyTorch, `timm`, MNE, scikit-l
 
 # 6. Résultats
 
-Sauf mention contraire, tous les chiffres de ce chapitre viennent du journal de bord (entrées 23 juin–7 juillet 2026) et de l’agrégation `summarize_g2_json_logs.py`. **Aucun mean LOSO n’est reporté.**
+Sauf mention contraire, tous les chiffres de ce chapitre viennent du journal de bord et de l’agrégation `summarize_g2_json_logs.py`. Le mean LOSO ci-dessous est celui du **2 septembre 2026** (41 plis, stade *finetune*).
 
 ## 6.1 Contrôle négatif : BCI Competition IV-2a
 
@@ -691,11 +773,25 @@ ST-EEGFormer et LaBraM sont **à parité** en population sur ce jeu. La LDA rest
 
 **Limite de lecture.** La LDA 55,7 % du journal est d’abord la moyenne des **8** sujets de `part0` après correction. Le run ST-EEGFormer 61,66 % porte sur **43** sujets. La comparaison LaBraM ~62 % est celle communiquée par Liz pour le même paradigme. On ne prétend pas ici à un test statistique apparié 43 vs 43 sur la LDA.
 
-## 6.4 LOSO : statut, pas de chiffre agrégé
+## 6.4 LOSO : 41 plis terminés
 
-Un job Slurm de fine-tuning leave-one-subject-out (43 plis) a été soumis (ex. `77622`, puis suivi `109704` sur `kng11`, limite 30 jours). Au **6 août 2026** : **13/43** répertoires `COMPLETED` (sujets 002–009, 011–015 ; pas de 010 dans la liste). Le 13 août, le statut oral était « more than halfway » **sans nouveau comptage vérifié**. Le 19 août, l’exposé technique a été fait **sans LOSO** (pas d’accès clés ce jour-là).
+Un job Slurm de fine-tuning leave-one-subject-out a été soumis (ex. `77622`, puis suivi `109704` / `111061` sur `kng11`). Historique : **13** `COMPLETED` au 6 août ; exposé du 19 août encore sans mean. Au **2 septembre 2026** : **41/41** marqueurs `COMPLETED` dans `~/data/g2_outputs/spatial_loo`.
 
-Tant que 43/43 plis ne sont pas `COMPLETED`, **aucune moyenne ni écart-type LOSO n’est publié dans ce rapport**. Un mean partiel biaiserait la comparaison avec LaBraM.
+Agrégation `summarize_g2_json_logs.py --log-root ~/data/g2_outputs/spatial_loo` :
+
+| | |
+|---|---|
+| Plis avec JSON | **41** |
+| Métrique | `acc1_whole` au stade *finetune* |
+| Mean ± std | **53,55 % ± 3,20 %** |
+| Dossier sans JSON | `leave_out_sub-060` |
+| IDs absents de l’arborescence | ex. 010 (la liste leave-out n’a pas 43 dossiers) |
+
+Ce 53,55 % n’est **pas** le 61,66 % population, et ce n’est pas non plus le zero-shot `sub-XXX_test_acc1` des journaux d’entraînement (spread beaucoup plus large, mean partiel ~56,7 % sur 40 plis extrait plus tôt — **on ne le cite pas comme mean officiel**). Le chiffre à reporter pour le LOSO tel qu’agrégé par le script du dépôt est **53,55 % ± 3,20 %** (41 plis, finetune).
+
+La comparaison avec un LOSO LaBraM ~62 % (chiffre Liz, protocole à confirmer) n’est pas une conclusion d’écart de modèle tant que les plis, la métrique et le stade (zero-shot vs calibration) ne sont pas appariés.
+
+Réunion Liz du **2 septembre** : en mettant côte à côte les résultats par sujet des deux pipelines, les sujets **004, 019, 020, 031, 046** ressortent comme difficiles pour les deux modèles (015 à surveiller). C’est une observation issue de la discussion, pas une analyse de corrélation formelle. Pistes preprocessing (EA, laplacien, artefacts) **non encore chiffrées** sur ST-EEGFormer au 10 septembre 2026.
 
 ## 6.5 Ce que ces chiffres ne disent pas
 
@@ -727,15 +823,15 @@ Trois lectures se dégagent, par ordre de solidité décroissante.
 
 C’est la limite la plus importante du chapitre 6, et elle mérite d’être énoncée sans détour. Dans le protocole population, le découpage apprentissage/test se fait **par session à l’intérieur de chaque sujet** : les sessions 1 à 6 d’un sujet servent à l’apprentissage, les sessions 7 et 8 au test. Chaque sujet de test a donc été vu à l’entraînement, avec d’autres sessions.
 
-Ce protocole répond à la question : *existe-t-il des motifs d’attention spatiale exploitables par un modèle unique entraîné sur une population, pour des utilisateurs déjà enrôlés ?* Il ne répond pas à la question qui compte pour une BCI déployable : *que se passe-t-il face à un utilisateur jamais vu ?* Les 61,66 % ne sont donc pas une mesure de généralisation inter-sujets, et il serait fautif de les présenter comme telle. C’est précisément pour cela que le protocole *leave-one-subject-out* a été lancé — et pourquoi son absence de conclusion chiffrée est une limite réelle du rapport, non une formalité.
+Ce protocole répond à la question : *existe-t-il des motifs d’attention spatiale exploitables par un modèle unique entraîné sur une population, pour des utilisateurs déjà enrôlés ?* Il ne répond pas à la question qui compte pour une BCI déployable : *que se passe-t-il face à un utilisateur jamais vu ?* Les 61,66 % ne sont donc pas une mesure de généralisation inter-sujets, et il serait fautif de les présenter comme telle. C’est précisément pour cela que le protocole *leave-one-subject-out* a été lancé. Il est maintenant chiffré (§ 6.4) : **53,55 % ± 3,20 %** sur 41 plis (stade *finetune*). L’écart avec les 61,66 % population n’est pas un « échec du modèle » : ce sont deux questions différentes.
 
-## 7.3 Le LOSO : coût, statut, et pourquoi aucune moyenne n’est publiée
+## 7.3 Le LOSO : coût, résultat, et ce qu’il ne faut pas en faire
 
-Un LOSO à 43 plis n’est pas un run, c’est 43 runs. Chaque pli exige un entraînement complet sur 42 sujets (50 epochs) puis une adaptation sur le sujet exclu (30 epochs). À l’échelle mesurée sur le run population — de l’ordre de 55 minutes par epoch sur une V100 partagée — un pli représente plusieurs dizaines d’heures de calcul, et la série complète plusieurs mois de GPU si elle est exécutée séquentiellement. D’où la migration vers Slurm, décidée avec Cuong, et le mécanisme de reprise par marqueur `COMPLETED` décrit au § 4.6.
+Un LOSO n’est pas un run, c’est un run par sujet exclu. Chaque pli exige un entraînement complet sur les autres sujets (50 epochs) puis une adaptation sur le sujet exclu. À l’échelle mesurée sur le run population — de l’ordre de 55 minutes par epoch sur une V100 partagée — un pli représente plusieurs dizaines d’heures, d’où Slurm et le marqueur `COMPLETED`.
 
-Au 6 août 2026, le travail était en cours d’exécution sur `kng11` avec **13 plis sur 43** terminés, à un rythme observé d’environ un pli par jour. Le 13 août, le statut communiqué à l’oral était « plus de la moitié », sans nouveau décompte vérifié. L’exposé technique du 19 août a été fait sans chiffres LOSO, faute d’accès au cluster ce jour-là.
+Au 6 août 2026 : **13** plis terminés, dans l’ordre des identifiants — un préfixe, pas un tirage aléatoire. Publier une moyenne partielle aurait biaisé la comparaison avec LaBraM. Cette règle a été tenue jusqu’au **2 septembre**, date à laquelle **41** plis ont un JSON : mean **53,55 % ± 3,20 %**.
 
-La règle appliquée dans tout ce rapport est qu’**aucune moyenne ni écart-type LOSO n’est publié tant que les 43 plis ne sont pas terminés**. Cette règle n’est pas une précaution rhétorique : les plis se terminent dans l’ordre des identifiants de sujets (`002` à `015` pour les treize premiers), ce qui n’est pas un tirage aléatoire. Or le chapitre 6 montre que la variabilité inter-sujets est considérable — de 39,6 % à 70,8 % en LDA. Une moyenne calculée sur un préfixe ordonné de sujets serait donc une estimation à biais inconnu, qu’il serait ensuite impossible de comparer honnêtement à la ligne LaBraM. Mieux vaut un statut qu’un chiffre non interprétable.
+Trois précautions de lecture restent. (1) L’arborescence n’a pas 43 leave-out. (2) Le script officiel agrège `acc1_whole` *finetune*, pas le zero-shot held-out. (3) Un LOSO LaBraM ~62 % n’est comparable que si le protocole est le même. La distribution par sujet — sujets durs communs 004, 019, 020, 031, 046 — est plus informative que le mean pour la suite (preprocessing Liz).
 
 ## 7.4 Autres limites, énoncées
 
@@ -761,7 +857,7 @@ L’exposé technique du 19 août (session d’étude EEG ↔ imagerie calcique)
 
 Par ordre de rapport information/coût décroissant :
 
-1. **Terminer le LOSO** et publier la moyenne, l’écart-type et la distribution par sujet — cette dernière étant probablement plus informative que la moyenne, vu la variabilité observée.
+1. **Tester les pistes Liz** (Euclidean Alignment, laplacien, rejet d’artefacts) d’abord en CSP+LDA sur les sujets durs, puis un seul run population si un gain apparaît — pas un second LOSO 41 plis d’emblée.
 2. **Recalculer la LDA sur les 43 sujets** et ajouter un **CSP + LDA**, pour une comparaison classique/FM défendable. Coût : négligeable.
 3. **Reporter la confiance** : trois graines sur le run population, et intervalles de confiance sur les plis LOSO.
 4. **Ablation pré-entraîné contre entraîné de zéro** : c’est la seule expérience qui teste la valeur du pré-entraînement sur *notre* tâche. Coût élevé, à cadrer avec Cuong, mais c’est la condition d’une contribution publiable.
@@ -769,9 +865,64 @@ Par ordre de rapport information/coût décroissant :
 6. **Invariance d’identité de canal**, transposée des travaux d’imagerie calcique du laboratoire : réduire la dépendance au plongement d’électrode pour améliorer la transférabilité entre montages. C’est la piste « modèle chimère » EEG ↔ calcium évoquée le 13 août.
 7. **Calibration par sujet** : quelques essais du sujet cible pour ajuster la tête, ce qui correspond au coût réel d’une BCI déployée et se situe entre les protocoles 4 et 5 du chapitre 3.
 
-Une machine plus puissante étant annoncée pour le 1er septembre 2026, l’arbitrage n’est plus seulement le nombre de GPU disponibles, mais **le choix des expériences à lancer**. La leçon des cinq premiers mois est que la contrainte dominante n’a jamais été le calcul : elle a été la vitesse à laquelle une hypothèse pouvait être testée puis éliminée.
+La machine ATR A100 est accessible depuis le 2 septembre 2026 (VPN). L’arbitrage n’est plus le nombre de GPU, mais **quelles expériences lancer**. Les `.pkl` restent sur mnode ; un transfert depuis le laboratoire est nécessaire avant un rerun A100. La leçon des mois précédents : la contrainte dominante n’a jamais été le calcul, mais la vitesse à laquelle une hypothèse peut être testée puis éliminée.
 
-## 7.7 Recul sur la démarche
+## 7.7 Comment améliorer ces algorithmes ? Une analyse par levier
+
+La liste précédente dit *quoi* faire ensuite. Cette section tente de dire *pourquoi* chaque piste pourrait aider, en repartant de la mécanique des deux modèles décrite au chapitre 3, et en séparant honnêtement trois statuts : **réalisé**, **prêt à tester** (code écrit, non exécuté) et **prospectif** (idée argumentée, pas de code). Aucun gain chiffré n’est promis ici : l’expérience du stage montre que la plupart des hypothèses raisonnables tombent au premier test, et c’est précisément pour cela qu’il faut les tester vite.
+
+Le point de départ est un diagnostic. Sur notre tâche, les deux modèles de fondation plafonnent autour de 62 % en population et le LOSO tombe à 53,55 %, alors que 144 essais par sujet suffisent à une LDA pour dépasser le hasard. L’écart population/LOSO dit que **ce qui manque n’est pas de la capacité de modèle, mais de l’invariance inter-sujets**. Un modèle de 302 M de paramètres sait mémoriser ce qui distingue un sujet ; il ne sait pas encore ignorer ce qui le distingue. Les leviers ci-dessous sont classés selon l’endroit de la chaîne où ils agissent.
+
+### 7.7.1 Levier 1 — L’entrée : rendre les sujets plus semblables avant le modèle
+
+C’est le levier le moins coûteux et le premier à tester, car il agit sans toucher aux poids pré-entraînés et s’applique de la même façon aux deux modèles. Trois techniques ont été proposées par Liz Costato le 2 septembre ; leur code est écrit (`benchmark/spatial_attention/`) et **n’a pas encore été exécuté** sur mnode.
+
+- **Alignement euclidien** (EA, He & Wu, 2020). Pour chaque sujet, on calcule la matrice de covariance moyenne de ses essais et l’on blanchit tous ses essais par sa racine carrée inverse. Après transformation, chaque sujet a une covariance moyenne identité : les différences d’impédance, de gain et de géométrie de casque, qui déplacent la distribution des signaux d’un sujet à l’autre, sont en grande partie retirées. Pourquoi cela devrait aider *ici* : le plongement de ST-EEGFormer est linéaire par patch et la normalisation par canal n’aligne que les variances, pas les corrélations inter-canaux ; l’EA aligne aussi ces dernières. Précaution : la matrice doit être estimée sur les essais d’apprentissage du sujet seulement, sinon le test fuit dans l’apprentissage. Statut : **prêt à tester**, d’abord en CSP + LDA sur les sujets durs (004, 019, 020, 031, 046), puis un run population unique si un signe positif apparaît.
+- **Laplacien de surface / densité de courant (CSD).** C’est un filtre spatial passe-haut : on soustrait à chaque électrode une combinaison de ses voisines, ce qui atténue les composantes diffuses (référence, artefacts lents) et accentue les sources locales. Pourquoi cela devrait aider : l’attention spatiale se manifeste par une **latéralisation** de l’activité pariéto-occipitale ; un filtre qui accentue les contrastes locaux devrait rendre ce contraste gauche/droite plus lisible dès l’entrée. Prérequis : positions des 64 électrodes (montage MNE). Statut : **prêt à tester**.
+- **Rejet d’essais par amplitude.** Écarter les essais dont l’amplitude crête dépasse un seuil (150 µV par défaut dans le script). Pourquoi : quelques essais artefactés suffisent à dominer une moyenne de tokens sur 4 096 positions. Précaution : vérifier les unités réelles des `.pkl` avant de fixer le seuil, sinon on rejette tout ou rien. Statut : **prêt à tester**.
+
+À ces trois pistes s’ajoute un **témoin classique renforcé** — CSP + LDA sur les 43 sujets — qui n’améliore pas le modèle mais rend toute amélioration mesurable. Sans lui, un gain de deux points reste indistinguable du bruit.
+
+### 7.7.2 Levier 2 — La représentation : ce que le modèle voit du signal
+
+Ces pistes touchent à l’architecture ou à la donnée d’entrée du transformeur ; elles sont plus coûteuses et **prospectives**.
+
+- **La perte d’information au rééchantillonnage.** ST-EEGFormer ramène nos 256 Hz à 128 Hz, LaBraM à 200 Hz. Pour l’attention spatiale, l’information utile est surtout dans la bande alpha (8–12 Hz) et ses voisines, bien en dessous de la limite de 64 Hz imposée par le rééchantillonnage : la perte est probablement faible. Mais ce n’est qu’un raisonnement ; l’expérience directe consiste à fine-tuner ST-EEGFormer en gardant 256 Hz (le codage temporel accepte jusqu’à 512 positions, donc 8 s × 256 Hz / 16 = 128 patches par canal tiennent). Le modèle verrait alors des patches de 62,5 ms au lieu de 125 ms, hors de sa distribution de pré-entraînement ; le résultat dirait si les poids pré-entraînés sont liés à une échelle temporelle. Coût : un run population.
+- **Le grain temporel.** Le tableau du § 3.5.4 montre deux régimes extrêmes : 125 ms pour ST-EEGFormer, 1 s pour LaBraM. Un rythme alpha fait ~100 ms par cycle ; un patch de 125 ms en contient à peine un, un patch de 1 s en contient dix. Aucun des deux n’est *a priori* le bon grain pour une modulation d’attention qui dure plusieurs secondes. Une piste architecturale est un plongement **multi-échelle** (patches courts et longs concaténés, ou patches recouvrants), qui n’existe dans aucun des deux modèles. Coût : re-pré-entraînement, hors de portée du stage.
+- **L’identité de l’électrode.** Les deux modèles ajoutent à chaque patch un vecteur appris propre à l’électrode. C’est utile pour dire *où*, mais c’est aussi une porte ouverte à la mémorisation du montage et, indirectement, du sujet. Les travaux d’imagerie calcique du laboratoire (CAPT, § 3.6) montrent qu’**apprendre à se passer de l’identité** de l’unité enregistrée améliore le transfert. Transposé à l’EEG : *dropout* de canaux à l’entraînement, ou remplacement de la table d’électrodes par un codage à partir des **coordonnées 3D** du montage, qui généralise à un casque jamais vu. C’est la piste la plus directement liée à la question du LOSO, et la plus coûteuse. Statut : prospectif ; un premier pas peu cher est le *dropout* de canaux au fine-tuning, testable sans re-pré-entraîner.
+- **La fusion des tokens.** Une moyenne uniforme sur 4 096 tokens donne le même poids à Fp1 et à PO7, à la première et à la dernière seconde. Pour une tâche latéralisée pariéto-occipitale, un **pooling par attention** (une requête apprise qui pondère les tokens) permettrait au modèle de se concentrer sur les électrodes et instants informatifs, sans toucher à l’encodeur. Coût : quelques milliers de paramètres, un run population. Statut : prospectif, mais peu cher.
+
+### 7.7.3 Levier 3 — L’objectif de pré-entraînement
+
+C’est l’endroit où les deux modèles diffèrent (figure 3.2), et c’est le levier le plus coûteux : toute modification exige un re-pré-entraînement, même réduit.
+
+- **Une corrélation à la place de la MSE** (retour du professeur Ishii, 19 août). La MSE sur amplitudes récompense d’abord la bonne ligne de base et la bonne énergie ; une corrélation de Pearson entre patch prédit et patch vrai récompense la bonne *forme*, indépendamment de l’échelle. La modification est locale (`forward_loss`, § 3.4.3) et testable sur un pré-entraînement réduit (variante *base*, sous-ensemble de données). Statut : prospectif, code trivial, coût de calcul élevé.
+- **Une cible spectrale, sans dictionnaire.** LaBraM apprend son dictionnaire sur le spectre de Fourier ; ST-EEGFormer régresse le signal temporel. Une voie intermédiaire consiste à demander à ST-EEGFormer de prédire, pour chaque patch masqué, **l’amplitude spectrale** (ou de combiner MSE temporelle et spectrale), ce qui importe l’intuition de LaBraM sans sa quantification. Statut : prospectif.
+- **L’ablation qui manque encore.** Avant d’optimiser l’objectif, il faut savoir combien il vaut : fine-tuner un ST-EEGFormer **initialisé au hasard** sur nos données et le comparer au pré-entraîné. Si l’écart est nul, aucune amélioration du pré-entraînement ne se verra sur cette tâche, et il faut porter l’effort sur les leviers 1 et 4. Si l’écart est grand, le levier 3 est justifié. C’est l’expérience la plus informative du lot, et elle n’a pas encore été faite.
+
+### 7.7.4 Levier 4 — L’adaptation et la mesure
+
+- **Un fine-tuning moins gourmand.** Mettre à jour 302 M de paramètres avec 144 essais par sujet est un régime où le surapprentissage est la règle ; le `layer_decay` a montré à quel point le réglage de *qui* apprend change tout (§ 4.6). Les alternatives sont connues : geler les premiers blocs, adapter seulement les normalisations et la tête, ou insérer des matrices de bas rang (LoRA). Elles réduisent aussi le coût mémoire, donc le temps de cycle. Statut : prospectif, coût faible.
+- **La calibration par sujet.** Le protocole LOO fine-tune du chapitre 3 (n° 5) correspond au coût réel d’une BCI : quelques essais du nouvel utilisateur pour adapter la tête. Notre LOSO l’implémente déjà (stade *finetune*) ; ce qu’il reste à mesurer est la **courbe** exactitude en fonction du nombre d’essais de calibration, qui dit combien de minutes d’enregistrement il faut à un nouvel utilisateur. Coût : réutilise les plis existants.
+- **Mesurer avant de conclure.** Trois graines sur le run population ; intervalles de confiance sur les plis LOSO ; alignement strict des plis et de la métrique avec la ligne LaBraM avant toute comparaison inter-modèles ; et un regard par sujet plutôt qu’une moyenne, puisque les sujets durs communs (004, 019, 020, 031, 046) sont le vrai objet du travail avec Liz. Ce levier n’améliore aucun algorithme, mais il conditionne la capacité à savoir si les autres ont marché.
+
+### 7.7.5 Synthèse et ordre d’attaque
+
+| Piste | Levier | Statut | Coût | Ce que l’on apprend |
+|---|---|---|---|---|
+| EA / CSD / rejet d’artefacts (CSP + LDA sur sujets durs) | entrée | prêt à tester | minutes CPU | si le problème est en amont du modèle |
+| CSP + LDA sur 43 sujets | mesure | à faire | minutes CPU | une baseline défendable |
+| *Dropout* de canaux, pooling par attention | représentation | prospectif | 1 run population | si la fusion / l’identité d’électrode limitent |
+| Fine-tuning partiel (blocs gelés, LoRA) | adaptation | prospectif | 1 run population | si le surapprentissage domine |
+| 3 graines + IC LOSO | mesure | à faire | 3 runs | la barre d’erreur |
+| Pré-entraîné vs de zéro | objectif | à faire | 1 run long | la valeur du pré-entraînement *ici* |
+| Fine-tuning à 256 Hz natif | représentation | prospectif | 1 run population | si l’échelle temporelle est apprise |
+| Corrélation / cible spectrale | objectif | prospectif | re-pré-entraînement réduit | si l’objectif MAE est le bon |
+| Codage d’électrode par coordonnées | représentation | prospectif | re-pré-entraînement | transfert inter-montages |
+
+La règle d’ordre est celle apprise pendant le stage : commencer par ce qui répond en minutes, réserver les runs longs à ce que les runs courts n’ont pas pu trancher, et ne lancer aucun re-pré-entraînement avant que l’ablation « de zéro » ait montré qu’il en vaut la peine.
+
+## 7.8 Recul sur la démarche
 
 Quatre situations concrètes, et ce qu’elles m’ont appris comme méthode de travail.
 
@@ -794,7 +945,7 @@ Quatre situations concrètes, et ce qu’elles m’ont appris comme méthode de 
 
 Ce stage de fin d’études, effectué du 2 avril au 30 septembre 2026 au Ishii Laboratory de l’université de Kyoto, portait sur l’évaluation d’un modèle de fondation EEG, **ST-EEGFormer** (Yang et al., ICLR 2026), sur une tâche d’attention spatiale du laboratoire, en comparaison avec **LaBraM** et avec une baseline linéaire.
 
-Les cinq objectifs fixés au chapitre 1 ont été atteints, à un près qui reste ouvert.
+Les cinq objectifs fixés au chapitre 1 ont été atteints.
 
 | Objectif | État |
 |---|---|
@@ -802,9 +953,9 @@ Les cinq objectifs fixés au chapitre 1 ont été atteints, à un près qui rest
 | Choisir un modèle implémentable et son comparateur | **Atteint** — ST-EEGFormer (code MIT, points de contrôle publiés) et LaBraM |
 | Rendre le benchmark exécutable hors de son environnement HPC d’origine | **Atteint** — Windows, macOS, puis cluster du laboratoire sous Slurm |
 | Obtenir un chiffre population honnête sur les données du laboratoire | **Atteint** — 61,66 %, avec LDA à 55,7 % et hasard à 50 % |
-| Lancer un protocole *leave-one-subject-out* complet | **Lancé, non terminé** — 13 plis sur 43 au 6 août 2026 ; aucune moyenne publiée |
+| Lancer un protocole *leave-one-subject-out* complet | **Atteint** — 41/41 `COMPLETED` au 2 sept. 2026 ; **53,55 % ± 3,20 %** (finetune, script officiel) |
 
-Le résultat scientifique tient en une phrase : sur cette tâche binaire et ce régime de 43 sujets, un modèle de fondation à patches continus fine-tuné atteint 61,66 %, soit la parité avec un modèle de fondation à tokens discrets (environ 62 %) et six points au-dessus d’une baseline linéaire — ce qui constitue une instance indépendante de la conclusion de Yang et al. selon laquelle le fine-tuning uniformise les modèles de fondation.
+Le résultat scientifique tient en deux phrases. Sur cette tâche binaire et ce régime de 43 sujets, un modèle de fondation à patches continus fine-tuné atteint 61,66 %, soit la parité avec un modèle de fondation à tokens discrets (environ 62 %) et environ six points au-dessus d’une baseline linéaire (mesurée sur 8 sujets) — ce qui constitue une instance indépendante de la conclusion de Yang et al. selon laquelle le fine-tuning uniformise les modèles de fondation. Face à un sujet jamais vu, le même modèle tombe à 53,55 % ± 3,20 % après calibration (41 plis) : ce qui manque n’est pas la capacité du modèle mais son invariance inter-sujets, et c’est là que portent les leviers d’amélioration analysés au § 7.7.
 
 Le résultat d’ingénierie, moins spectaculaire mais plus transférable, est la chaîne complète : extraction et conversion de 43 sujets EEGLAB avec un prétraitement aligné sur une ligne de référence, adaptation d’un dépôt de recherche à trois environnements matériels, orchestration sur cluster avec reprise par pli, et agrégation vérifiable des journaux. C’est cette chaîne qui a permis de transformer « le modèle ne marche pas » en trois diagnostics distincts et corrigés : un mapping de canaux erroné, un prétraitement absent, une décroissance de taux d’apprentissage qui gelait la dorsale.
 
@@ -828,7 +979,7 @@ Pour le laboratoire, le stage fournit la moitié ST-EEGFormer d’une comparaiso
 
 Pour moi, l’apport principal n’est pas le chiffre de 61,66 % mais la démarche qui y a mené. Les quatre premiers mois ont surtout produit des résultats au niveau du hasard, et la valeur du travail a résidé dans la capacité à ne pas conclure trop vite : ni « le modèle est mauvais », ni « les données sont mauvaises », mais une décomposition de la chaîne jusqu’à identifier la cause réelle, à chaque fois différente de l’hypothèse initiale. C’est, à mon sens, le cœur du métier d’ingénieur en apprentissage automatique appliqué : la difficulté n’est presque jamais l’architecture, elle est dans les conventions implicites — un fichier de mapping absent, un paramètre de fenêtre resté à sa valeur par défaut, une décroissance de taux d’apprentissage héritée d’un autre contexte.
 
-Le stage se poursuit jusqu’au 30 septembre 2026. Les priorités restantes sont la fin du LOSO, une baseline classique renforcée, un reporting de confiance, et l’ablation « pré-entraîné contre entraîné de zéro » qui déciderait si, sur cette tâche, le pré-entraînement mérite son coût.
+Le stage se poursuit jusqu’au 30 septembre 2026. Les priorités restantes sont les tests de preprocessing proposés par Liz (EA, laplacien, artefacts) avant tout rerun GPU long, une baseline classique renforcée (LDA/CSP sur 43 sujets), un reporting de confiance, et l’ablation « pré-entraîné contre entraîné de zéro » qui déciderait si, sur cette tâche, le pré-entraînement mérite son coût. Dépôt ESME visé le **14 septembre** ; soutenance le **21 septembre**.
 
 
 ```{=openxml}
@@ -847,7 +998,7 @@ Les références sont classées par thème. Les métadonnées des travaux cités
 
 2. **Kostas, D., Aroca-Ouellette, S., & Rudzicz, F.** (2021). *BENDR: Using Transformers and a Contrastive Self-Supervised Learning Task to Learn from Massive Amounts of EEG Data.* arXiv:2101.12037.
 3. **Yang, C., Westover, M. B., & Sun, J.** (2023). *BIOT: Cross-data Biosignal Learning in the Wild.* arXiv:2305.10351.
-4. **Jiang, W.-B., Zhao, L.-M., & Lu, B.-L.** (2024). *Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI* (LaBraM). arXiv:2405.18765.
+4. **Jiang, W.-B., Zhao, L.-M., & Lu, B.-L.** (2024). *Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI* (LaBraM). The Twelfth International Conference on Learning Representations (ICLR 2024). arXiv:2405.18765. Code : `https://github.com/935963004/LaBraM` (copie de l’encodeur dans `benchmark/neural_networks/models/labram.py` du dépôt ST-EEGFormer).
 5. **Wang, G., Liu, W., He, Y., Xu, C., Ma, L., & Li, H.** (2024). *EEGPT: Pretrained Transformer for Universal and Reliable Representation of EEG Signals.* Advances in Neural Information Processing Systems 37, 39249–39280.
 6. **Wang, J., Zhao, S., Luo, Z., Zhou, Y., Jiang, H., Li, S., Li, T., & Pan, G.** (2025). *CBraMod: A Criss-Cross Brain Foundation Model for EEG Decoding.* arXiv:2412.07236.
 7. *EEG Foundation Models: A Critical Review of Current Progress and Future Directions.* — Revue remise par le professeur Ishii en avril 2026 et présentée au séminaire du laboratoire. **Le PDF n’est pas présent sur la machine de rédaction** ; seule ma présentation dérivée l’est. Références bibliographiques complètes à compléter avant dépôt.
@@ -868,7 +1019,6 @@ Les références sont classées par thème. Les métadonnées des travaux cités
 16. **Zhao, W., Jiang, X., Zhang, B., Xiao, S., & Weng, S.** (2024). *CTNet: A Convolutional Transformer Network for EEG-based Motor Imagery Classification.* Scientific Reports, 14(1), 20237.
 17. **Chen, X., Wang, Y., Gao, S., Jung, T.-P., & Gao, X.** (2015). *Filter Bank Canonical Correlation Analysis for Implementing a High-Speed SSVEP-based Brain–Computer Interface.* (FBCCA ; référence citée par le papier support.)
 18. **Nakanishi, M., Wang, Y., Chen, X., Wang, Y.-T., Gao, X., & Jung, T.-P.** (2018). *Enhancing Detection of SSVEPs for a High-Speed Brain Speller Using Task-Related Component Analysis.* (TRCA ; référence citée par le papier support.)
-
 ## Jeux de données
 
 19. **Tangermann, M., Müller, K.-R., Aertsen, A., et al.** (2012). *Review of the BCI Competition IV.* Frontiers in Neuroscience, 6, 55. (BCI-IV-2a, 4 classes, hasard 25 %.)
@@ -888,7 +1038,11 @@ Les références sont classées par thème. Les métadonnées des travaux cités
 27. **Journal de bord du stage**, `torch-brain-eeg/notes/JOURNAL.md` (avril–août 2026). Source de vérité pour toutes les dates, configurations et valeurs numériques citées dans les chapitres 5 et 6.
 28. **Fiche de lecture EEG ↔ imagerie calcique**, `notes/papers/README_meeting_2026-08-13.md`.
 29. **Supports de présentation** : séminaire de revue (avril), présentation d’article (mai), *progress talk* du 23 juillet, exposé technique du 19 août — répertoire `STEEGFormer/presentations/`.
-30. **Code du stage** : `util/prepare_atr_nbp_spatial_attention.py`, `util/dataset_specs_lab_spatial_attention.yaml`, `scripts/summarize_g2_json_logs.py`, scripts d’orchestration PowerShell et Slurm.
+30. **Code du stage** : `util/prepare_atr_nbp_spatial_attention.py`, `util/dataset_specs_lab_spatial_attention.yaml`, `scripts/summarize_g2_json_logs.py`, scripts d’orchestration PowerShell et Slurm ; scripts de prétraitement `benchmark/spatial_attention/` (alignement euclidien, laplacien/CSD, rejet d’artefacts — écrits, non encore exécutés au 10 septembre 2026).
+
+## Transfert inter-sujets et prétraitement
+
+31. **He, H., & Wu, D.** (2020). *Transfer Learning for Brain–Computer Interfaces: A Euclidean Space Data Alignment Approach.* IEEE Transactions on Biomedical Engineering, 67(2), 399–410. (Alignement euclidien, piste proposée par Liz Costato le 2 septembre 2026.)
 
 
 ```{=openxml}
@@ -1001,7 +1155,7 @@ Détail des plis LOO : A01 26,12 % · A02 25,39 % · A03 24,88 % · A04 25,08 % 
 
 **Attention spatiale, conversion v2, ST-EEGFormer population 43 sujets**, trajectoire de `test_whole_acc1` : ~50 % jusqu’à l’epoch 25 · 58,4 % (ep. 30) · 56,9 % (ep. 35) · 61,5 % (ep. 40) · 60,8 % (ep. 45) · **61,66 % (ep. 49)**, avec une exactitude d’apprentissage de 70,2 % à l’epoch 49.
 
-**LOSO** : travail Slurm sur `kng11`, limite de 30 jours, reprise par marqueur `COMPLETED`. Au 6 août 2026 : **13 plis terminés sur 43** (sujets 002–009 et 011–015). **Aucune moyenne agrégée n’est publiée.**
+**LOSO** (2 sept. 2026) : `~/data/g2_outputs/spatial_loo`, **41** `COMPLETED`, mean `summarize_g2_json_logs.py` **53,55 % ± 3,20 %** (`acc1_whole`, *finetune*). `leave_out_sub-060` sans JSON. Pas 43 dossiers leave-out.
 
 ## Annexe G — Environnements de calcul utilisés
 
@@ -1012,6 +1166,7 @@ Détail des plis LOO : A01 26,12 % · A02 25,39 % · A03 24,88 % · A04 25,08 % 
 | `kng07` / `kng08` | 2 × Tesla V100 32 Go | nœuds partagés, MPS ; ~55 min/epoch en population 43 sujets |
 | `gnode01` | 3 × RTX 4500 Ada | utilisé pour le LOO BCI |
 | `kng11` | 4 × A6000 | LOSO via Slurm (`--gres=gpu:a6000:1`) |
+| `abi-dgx-a100` (ATR, VPN) | 8 × A100 40 Go | accès OK 2 sept. 2026 ; données encore sur mnode |
 | `kng12` | 8 × A4000 | `--gres=gpu:a4000:1` ; indisponible à la date de soumission |
 | `mnode` | nœud de connexion Slurm | `module load slurm/23.02.7` avant `sbatch` |
 
@@ -1037,7 +1192,7 @@ Détail des plis LOO : A01 26,12 % · A02 25,39 % · A03 24,88 % · A04 25,08 % 
 
 - Référence complète de Morioka et al. (2014) et de la revue *Critical Review* (PDF absents de la machine de rédaction).
 - Canevas de page de garde et logos officiels de l’école, non disponibles sur ce poste.
-- Résultat LOSO agrégé, **uniquement si les 43 plis sont terminés** à la date de dépôt.
+- LOSO agrégé **déjà disponible** (41 plis, 53,55 % ± 3,20 %) — à relire avec Cuong avant dépôt.
 - LDA recalculée sur les 43 sujets, si le temps le permet (coût négligeable).
 - Figures à produire : schéma comparatif des conversions v1/v2 et courbe d’apprentissage du run population.
 

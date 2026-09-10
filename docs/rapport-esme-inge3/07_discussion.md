@@ -60,7 +60,62 @@ Par ordre de rapport information/coût décroissant :
 
 La machine ATR A100 est accessible depuis le 2 septembre 2026 (VPN). L’arbitrage n’est plus le nombre de GPU, mais **quelles expériences lancer**. Les `.pkl` restent sur mnode ; un transfert depuis le laboratoire est nécessaire avant un rerun A100. La leçon des mois précédents : la contrainte dominante n’a jamais été le calcul, mais la vitesse à laquelle une hypothèse peut être testée puis éliminée.
 
-## 7.7 Recul sur la démarche
+## 7.7 Comment améliorer ces algorithmes ? Une analyse par levier
+
+La liste précédente dit *quoi* faire ensuite. Cette section tente de dire *pourquoi* chaque piste pourrait aider, en repartant de la mécanique des deux modèles décrite au chapitre 3, et en séparant honnêtement trois statuts : **réalisé**, **prêt à tester** (code écrit, non exécuté) et **prospectif** (idée argumentée, pas de code). Aucun gain chiffré n’est promis ici : l’expérience du stage montre que la plupart des hypothèses raisonnables tombent au premier test, et c’est précisément pour cela qu’il faut les tester vite.
+
+Le point de départ est un diagnostic. Sur notre tâche, les deux modèles de fondation plafonnent autour de 62 % en population et le LOSO tombe à 53,55 %, alors que 144 essais par sujet suffisent à une LDA pour dépasser le hasard. L’écart population/LOSO dit que **ce qui manque n’est pas de la capacité de modèle, mais de l’invariance inter-sujets**. Un modèle de 302 M de paramètres sait mémoriser ce qui distingue un sujet ; il ne sait pas encore ignorer ce qui le distingue. Les leviers ci-dessous sont classés selon l’endroit de la chaîne où ils agissent.
+
+### 7.7.1 Levier 1 — L’entrée : rendre les sujets plus semblables avant le modèle
+
+C’est le levier le moins coûteux et le premier à tester, car il agit sans toucher aux poids pré-entraînés et s’applique de la même façon aux deux modèles. Trois techniques ont été proposées par Liz Costato le 2 septembre ; leur code est écrit (`benchmark/spatial_attention/`) et **n’a pas encore été exécuté** sur mnode.
+
+- **Alignement euclidien** (EA, He & Wu, 2020). Pour chaque sujet, on calcule la matrice de covariance moyenne de ses essais et l’on blanchit tous ses essais par sa racine carrée inverse. Après transformation, chaque sujet a une covariance moyenne identité : les différences d’impédance, de gain et de géométrie de casque, qui déplacent la distribution des signaux d’un sujet à l’autre, sont en grande partie retirées. Pourquoi cela devrait aider *ici* : le plongement de ST-EEGFormer est linéaire par patch et la normalisation par canal n’aligne que les variances, pas les corrélations inter-canaux ; l’EA aligne aussi ces dernières. Précaution : la matrice doit être estimée sur les essais d’apprentissage du sujet seulement, sinon le test fuit dans l’apprentissage. Statut : **prêt à tester**, d’abord en CSP + LDA sur les sujets durs (004, 019, 020, 031, 046), puis un run population unique si un signe positif apparaît.
+- **Laplacien de surface / densité de courant (CSD).** C’est un filtre spatial passe-haut : on soustrait à chaque électrode une combinaison de ses voisines, ce qui atténue les composantes diffuses (référence, artefacts lents) et accentue les sources locales. Pourquoi cela devrait aider : l’attention spatiale se manifeste par une **latéralisation** de l’activité pariéto-occipitale ; un filtre qui accentue les contrastes locaux devrait rendre ce contraste gauche/droite plus lisible dès l’entrée. Prérequis : positions des 64 électrodes (montage MNE). Statut : **prêt à tester**.
+- **Rejet d’essais par amplitude.** Écarter les essais dont l’amplitude crête dépasse un seuil (150 µV par défaut dans le script). Pourquoi : quelques essais artefactés suffisent à dominer une moyenne de tokens sur 4 096 positions. Précaution : vérifier les unités réelles des `.pkl` avant de fixer le seuil, sinon on rejette tout ou rien. Statut : **prêt à tester**.
+
+À ces trois pistes s’ajoute un **témoin classique renforcé** — CSP + LDA sur les 43 sujets — qui n’améliore pas le modèle mais rend toute amélioration mesurable. Sans lui, un gain de deux points reste indistinguable du bruit.
+
+### 7.7.2 Levier 2 — La représentation : ce que le modèle voit du signal
+
+Ces pistes touchent à l’architecture ou à la donnée d’entrée du transformeur ; elles sont plus coûteuses et **prospectives**.
+
+- **La perte d’information au rééchantillonnage.** ST-EEGFormer ramène nos 256 Hz à 128 Hz, LaBraM à 200 Hz. Pour l’attention spatiale, l’information utile est surtout dans la bande alpha (8–12 Hz) et ses voisines, bien en dessous de la limite de 64 Hz imposée par le rééchantillonnage : la perte est probablement faible. Mais ce n’est qu’un raisonnement ; l’expérience directe consiste à fine-tuner ST-EEGFormer en gardant 256 Hz (le codage temporel accepte jusqu’à 512 positions, donc 8 s × 256 Hz / 16 = 128 patches par canal tiennent). Le modèle verrait alors des patches de 62,5 ms au lieu de 125 ms, hors de sa distribution de pré-entraînement ; le résultat dirait si les poids pré-entraînés sont liés à une échelle temporelle. Coût : un run population.
+- **Le grain temporel.** Le tableau du § 3.5.4 montre deux régimes extrêmes : 125 ms pour ST-EEGFormer, 1 s pour LaBraM. Un rythme alpha fait ~100 ms par cycle ; un patch de 125 ms en contient à peine un, un patch de 1 s en contient dix. Aucun des deux n’est *a priori* le bon grain pour une modulation d’attention qui dure plusieurs secondes. Une piste architecturale est un plongement **multi-échelle** (patches courts et longs concaténés, ou patches recouvrants), qui n’existe dans aucun des deux modèles. Coût : re-pré-entraînement, hors de portée du stage.
+- **L’identité de l’électrode.** Les deux modèles ajoutent à chaque patch un vecteur appris propre à l’électrode. C’est utile pour dire *où*, mais c’est aussi une porte ouverte à la mémorisation du montage et, indirectement, du sujet. Les travaux d’imagerie calcique du laboratoire (CAPT, § 3.6) montrent qu’**apprendre à se passer de l’identité** de l’unité enregistrée améliore le transfert. Transposé à l’EEG : *dropout* de canaux à l’entraînement, ou remplacement de la table d’électrodes par un codage à partir des **coordonnées 3D** du montage, qui généralise à un casque jamais vu. C’est la piste la plus directement liée à la question du LOSO, et la plus coûteuse. Statut : prospectif ; un premier pas peu cher est le *dropout* de canaux au fine-tuning, testable sans re-pré-entraîner.
+- **La fusion des tokens.** Une moyenne uniforme sur 4 096 tokens donne le même poids à Fp1 et à PO7, à la première et à la dernière seconde. Pour une tâche latéralisée pariéto-occipitale, un **pooling par attention** (une requête apprise qui pondère les tokens) permettrait au modèle de se concentrer sur les électrodes et instants informatifs, sans toucher à l’encodeur. Coût : quelques milliers de paramètres, un run population. Statut : prospectif, mais peu cher.
+
+### 7.7.3 Levier 3 — L’objectif de pré-entraînement
+
+C’est l’endroit où les deux modèles diffèrent (figure 3.2), et c’est le levier le plus coûteux : toute modification exige un re-pré-entraînement, même réduit.
+
+- **Une corrélation à la place de la MSE** (retour du professeur Ishii, 19 août). La MSE sur amplitudes récompense d’abord la bonne ligne de base et la bonne énergie ; une corrélation de Pearson entre patch prédit et patch vrai récompense la bonne *forme*, indépendamment de l’échelle. La modification est locale (`forward_loss`, § 3.4.3) et testable sur un pré-entraînement réduit (variante *base*, sous-ensemble de données). Statut : prospectif, code trivial, coût de calcul élevé.
+- **Une cible spectrale, sans dictionnaire.** LaBraM apprend son dictionnaire sur le spectre de Fourier ; ST-EEGFormer régresse le signal temporel. Une voie intermédiaire consiste à demander à ST-EEGFormer de prédire, pour chaque patch masqué, **l’amplitude spectrale** (ou de combiner MSE temporelle et spectrale), ce qui importe l’intuition de LaBraM sans sa quantification. Statut : prospectif.
+- **L’ablation qui manque encore.** Avant d’optimiser l’objectif, il faut savoir combien il vaut : fine-tuner un ST-EEGFormer **initialisé au hasard** sur nos données et le comparer au pré-entraîné. Si l’écart est nul, aucune amélioration du pré-entraînement ne se verra sur cette tâche, et il faut porter l’effort sur les leviers 1 et 4. Si l’écart est grand, le levier 3 est justifié. C’est l’expérience la plus informative du lot, et elle n’a pas encore été faite.
+
+### 7.7.4 Levier 4 — L’adaptation et la mesure
+
+- **Un fine-tuning moins gourmand.** Mettre à jour 302 M de paramètres avec 144 essais par sujet est un régime où le surapprentissage est la règle ; le `layer_decay` a montré à quel point le réglage de *qui* apprend change tout (§ 4.6). Les alternatives sont connues : geler les premiers blocs, adapter seulement les normalisations et la tête, ou insérer des matrices de bas rang (LoRA). Elles réduisent aussi le coût mémoire, donc le temps de cycle. Statut : prospectif, coût faible.
+- **La calibration par sujet.** Le protocole LOO fine-tune du chapitre 3 (n° 5) correspond au coût réel d’une BCI : quelques essais du nouvel utilisateur pour adapter la tête. Notre LOSO l’implémente déjà (stade *finetune*) ; ce qu’il reste à mesurer est la **courbe** exactitude en fonction du nombre d’essais de calibration, qui dit combien de minutes d’enregistrement il faut à un nouvel utilisateur. Coût : réutilise les plis existants.
+- **Mesurer avant de conclure.** Trois graines sur le run population ; intervalles de confiance sur les plis LOSO ; alignement strict des plis et de la métrique avec la ligne LaBraM avant toute comparaison inter-modèles ; et un regard par sujet plutôt qu’une moyenne, puisque les sujets durs communs (004, 019, 020, 031, 046) sont le vrai objet du travail avec Liz. Ce levier n’améliore aucun algorithme, mais il conditionne la capacité à savoir si les autres ont marché.
+
+### 7.7.5 Synthèse et ordre d’attaque
+
+| Piste | Levier | Statut | Coût | Ce que l’on apprend |
+|---|---|---|---|---|
+| EA / CSD / rejet d’artefacts (CSP + LDA sur sujets durs) | entrée | prêt à tester | minutes CPU | si le problème est en amont du modèle |
+| CSP + LDA sur 43 sujets | mesure | à faire | minutes CPU | une baseline défendable |
+| *Dropout* de canaux, pooling par attention | représentation | prospectif | 1 run population | si la fusion / l’identité d’électrode limitent |
+| Fine-tuning partiel (blocs gelés, LoRA) | adaptation | prospectif | 1 run population | si le surapprentissage domine |
+| 3 graines + IC LOSO | mesure | à faire | 3 runs | la barre d’erreur |
+| Pré-entraîné vs de zéro | objectif | à faire | 1 run long | la valeur du pré-entraînement *ici* |
+| Fine-tuning à 256 Hz natif | représentation | prospectif | 1 run population | si l’échelle temporelle est apprise |
+| Corrélation / cible spectrale | objectif | prospectif | re-pré-entraînement réduit | si l’objectif MAE est le bon |
+| Codage d’électrode par coordonnées | représentation | prospectif | re-pré-entraînement | transfert inter-montages |
+
+La règle d’ordre est celle apprise pendant le stage : commencer par ce qui répond en minutes, réserver les runs longs à ce que les runs courts n’ont pas pu trancher, et ne lancer aucun re-pré-entraînement avant que l’ablation « de zéro » ait montré qu’il en vaut la peine.
+
+## 7.8 Recul sur la démarche
 
 Quatre situations concrètes, et ce qu’elles m’ont appris comme méthode de travail.
 

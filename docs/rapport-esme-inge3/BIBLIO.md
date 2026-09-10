@@ -10,7 +10,7 @@ Les références sont classées par thème. Les métadonnées des travaux cités
 
 2. **Kostas, D., Aroca-Ouellette, S., & Rudzicz, F.** (2021). *BENDR: Using Transformers and a Contrastive Self-Supervised Learning Task to Learn from Massive Amounts of EEG Data.* arXiv:2101.12037.
 3. **Yang, C., Westover, M. B., & Sun, J.** (2023). *BIOT: Cross-data Biosignal Learning in the Wild.* arXiv:2305.10351.
-4. **Jiang, W.-B., Zhao, L.-M., & Lu, B.-L.** (2024). *Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI* (LaBraM). arXiv:2405.18765.
+4. **Jiang, W.-B., Zhao, L.-M., & Lu, B.-L.** (2024). *Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI* (LaBraM). The Twelfth International Conference on Learning Representations (ICLR 2024). arXiv:2405.18765. Code : `https://github.com/935963004/LaBraM` (copie de l’encodeur dans `benchmark/neural_networks/models/labram.py` du dépôt ST-EEGFormer).
 5. **Wang, G., Liu, W., He, Y., Xu, C., Ma, L., & Li, H.** (2024). *EEGPT: Pretrained Transformer for Universal and Reliable Representation of EEG Signals.* Advances in Neural Information Processing Systems 37, 39249–39280.
 6. **Wang, J., Zhao, S., Luo, Z., Zhou, Y., Jiang, H., Li, S., Li, T., & Pan, G.** (2025). *CBraMod: A Criss-Cross Brain Foundation Model for EEG Decoding.* arXiv:2412.07236.
 7. *EEG Foundation Models: A Critical Review of Current Progress and Future Directions.* — Revue remise par le professeur Ishii en avril 2026 et présentée au séminaire du laboratoire. **Le PDF n’est pas présent sur la machine de rédaction** ; seule ma présentation dérivée l’est. Références bibliographiques complètes à compléter avant dépôt.
@@ -31,7 +31,6 @@ Les références sont classées par thème. Les métadonnées des travaux cités
 16. **Zhao, W., Jiang, X., Zhang, B., Xiao, S., & Weng, S.** (2024). *CTNet: A Convolutional Transformer Network for EEG-based Motor Imagery Classification.* Scientific Reports, 14(1), 20237.
 17. **Chen, X., Wang, Y., Gao, S., Jung, T.-P., & Gao, X.** (2015). *Filter Bank Canonical Correlation Analysis for Implementing a High-Speed SSVEP-based Brain–Computer Interface.* (FBCCA ; référence citée par le papier support.)
 18. **Nakanishi, M., Wang, Y., Chen, X., Wang, Y.-T., Gao, X., & Jung, T.-P.** (2018). *Enhancing Detection of SSVEPs for a High-Speed Brain Speller Using Task-Related Component Analysis.* (TRCA ; référence citée par le papier support.)
-
 ## Jeux de données
 
 19. **Tangermann, M., Müller, K.-R., Aertsen, A., et al.** (2012). *Review of the BCI Competition IV.* Frontiers in Neuroscience, 6, 55. (BCI-IV-2a, 4 classes, hasard 25 %.)
@@ -51,4 +50,8 @@ Les références sont classées par thème. Les métadonnées des travaux cités
 27. **Journal de bord du stage**, `torch-brain-eeg/notes/JOURNAL.md` (avril–août 2026). Source de vérité pour toutes les dates, configurations et valeurs numériques citées dans les chapitres 5 et 6.
 28. **Fiche de lecture EEG ↔ imagerie calcique**, `notes/papers/README_meeting_2026-08-13.md`.
 29. **Supports de présentation** : séminaire de revue (avril), présentation d’article (mai), *progress talk* du 23 juillet, exposé technique du 19 août — répertoire `STEEGFormer/presentations/`.
-30. **Code du stage** : `util/prepare_atr_nbp_spatial_attention.py`, `util/dataset_specs_lab_spatial_attention.yaml`, `scripts/summarize_g2_json_logs.py`, scripts d’orchestration PowerShell et Slurm.
+30. **Code du stage** : `util/prepare_atr_nbp_spatial_attention.py`, `util/dataset_specs_lab_spatial_attention.yaml`, `scripts/summarize_g2_json_logs.py`, scripts d’orchestration PowerShell et Slurm ; scripts de prétraitement `benchmark/spatial_attention/` (alignement euclidien, laplacien/CSD, rejet d’artefacts — écrits, non encore exécutés au 10 septembre 2026).
+
+## Transfert inter-sujets et prétraitement
+
+31. **He, H., & Wu, D.** (2020). *Transfer Learning for Brain–Computer Interfaces: A Euclidean Space Data Alignment Approach.* IEEE Transactions on Biomedical Engineering, 67(2), 399–410. (Alignement euclidien, piste proposée par Liz Costato le 2 septembre 2026.)

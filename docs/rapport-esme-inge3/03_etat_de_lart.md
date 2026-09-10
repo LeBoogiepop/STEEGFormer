@@ -62,33 +62,52 @@ Le titre est une question, et c’est la contribution principale : **les modèle
 
 **ST-EEGFormer** (*spatiotemporal EEGFormer*) est introduit dans ce cadre non comme l’architecture ultime, mais comme un **témoin volontairement simple**. L’enjeu est explicite : LaBraM avait avancé que l’auto-encodage masqué sur EEG brut ne converge pas correctement, ce qui justifiait des objectifs de pré-entraînement plus élaborés. Si un ViT pré-entraîné uniquement par MAE sur le signal brut se révèle compétitif après fine-tuning, cette justification tombe.
 
-### 3.4.2 Architecture
+### 3.4.2 L’idée en une phrase, puis l’architecture
 
-L’architecture suit la recette **ViT** (Dosovitskiy et al., 2021), transposée au signal.
+L’idée de ST-EEGFormer se résume ainsi : **traiter un enregistrement EEG comme une image dont les « pixels » sont de courts morceaux de signal**, et appliquer sans modification la recette **ViT** (Dosovitskiy et al., 2021) — découper, projeter linéairement, ajouter une information de position, empiler des blocs d’auto-attention. Rien, dans le modèle, n’est spécifique à l’EEG en dehors du découpage et du codage de position. Tout ce qui suit est lu dans le code du dépôt (`benchmark/neural_networks/models/models_vit_eeg.py`), et la figure 2.1 (panneau b) en donne le schéma d’ensemble ; la figure 3.2 (§ 3.5) le met en regard de LaBraM sur nos données.
 
-- **Découpage en patches spatio-temporels.** Chaque *token* est un court segment temporel d’**un seul canal**. Dans le code (`PatchEmbedEEG`, `benchmark/neural_networks/models/models_vit_eeg.py`), c’est un `torch.nn.Unfold` de noyau et de pas 16 échantillons — donc des patches **non recouvrants** — suivi d’un `nn.Linear(16, embed_dim)`. À 128 Hz, un patch représente 125 ms d’un canal. **Il n’y a ni dictionnaire, ni recherche du plus proche voisin, ni indice discret** : c’est un plongement continu.
-- **Deux encodages positionnels.** Un encodage **temporel** sinusoïdal (`TemporalPositionalEncoding`, comme dans le Transformer original) indique *quand* ; un plongement **spatial appris** (`ChannelPositionalEmbed`, table `nn.Embedding(145, embed_dim)`) indique *quelle électrode*. Un *token* de classe est ajouté en tête, comme dans un ViT.
-- **Attention plate canal × temps.** Tous les patches, toutes électrodes et tous instants confondus, forment **une seule séquence**. L’auto-attention est celle d’un ViT standard, non causale : un patch du canal C3 à t = 1 s peut attendre un patch de Oz à t = 3 s. Attention inter-canaux et attention temporelle vivent donc dans **le même softmax** ; il n’y a pas de bloc « axe des canaux » séparé.
-- **Trois tailles**, définies dans le code : *small* (dimension 512, 8 blocs, 8 têtes), *base* (768, 12, 12) et *large* (1024, 24, 16), toutes avec des patches de 16 échantillons. La variante *large*, celle que nous utilisons, dépasse 300 millions de paramètres (environ 302 M mesurés dans nos journaux d’exécution).
+**Étape 1 — Le découpage (*patchify*).** Le signal d’entrée est une matrice `canaux × temps`. Chaque canal est coupé en segments consécutifs de **16 échantillons**, sans recouvrement (`torch.nn.Unfold`, noyau 16, pas 16). Un segment d’**un seul canal** sur 16 échantillons est un *patch* ; à 128 Hz, il dure **125 ms**. Sur notre fenêtre de 8 s à 64 canaux, rééchantillonnée à 128 Hz (§ 4.3), cela donne 64 patches par canal, soit **64 × 64 = 4 096 patches**.
 
-### 3.4.3 Le pré-entraînement : MAE, et rien d’autre
+**Étape 2 — Le plongement (*embedding*).** Chaque patch de 16 valeurs est projeté par **une seule couche linéaire** (`nn.Linear(16, D)`) en un vecteur de dimension *D* (1 024 pour la variante *large*). **Il n’y a ni dictionnaire, ni recherche du plus proche voisin, ni indice discret** : le vecteur est une fonction linéaire continue des 16 amplitudes. C’est ce que nous appelons « représentation continue ».
 
-Le pré-entraînement est un **auto-encodeur masqué** (MAE, He et al., 2022) :
+**Étape 3 — Dire au modèle *quand* et *où*.** Un transformeur ne sait rien de l’ordre de ses entrées ; il faut le lui ajouter. Deux vecteurs sont sommés à chaque plongement :
 
-1. 75 % des *tokens* sont masqués aléatoirement ;
-2. l’encodeur ne voit **que** les *tokens* visibles ;
-3. les *tokens* masqués sont réinsérés à leur position, avec leurs encodages positionnels ;
-4. un décodeur plus léger (512 dimensions, 8 blocs dans le code) traite la séquence complète ;
-5. une couche `nn.Linear(decoder_dim, patch_size)` prédit les **16 valeurs d’échantillons** de chaque patch ;
-6. la perte est l’**erreur quadratique moyenne** entre patches prédits et patches vrais, **moyennée uniquement sur les patches masqués** (`forward_loss`, `pretrain/models_mae_eeg.py`).
+- un **codage temporel sinusoïdal** (`TemporalPositionalEncoding`, formule du Transformer original, non appris), indexé par le numéro du patch dans la fenêtre : *quand* ;
+- un **plongement d’électrode appris** (`ChannelPositionalEmbed`, table `nn.Embedding(145, D)`), indexé par l’identifiant de l’électrode : *où*. Les 145 emplacements couvrent les 142 électrodes distinctes vues au pré-entraînement. C’est ce plongement qui rend nécessaire la traduction de nos noms d’électrodes en indices (§ 4.3).
 
-Autrement dit, la cible d’apprentissage est le signal lui-même — des amplitudes — et non un indice de dictionnaire. C’est la différence de fond avec LaBraM, et la raison pour laquelle l’analogie avec les modèles d’imagerie calcique du laboratoire (§ 3.6) fonctionne.
+Un **token de classe** (`[CLS]`) est ajouté en tête de séquence, comme dans un ViT.
 
-Le coût de ce pré-entraînement est documenté par les auteurs, ce qui est rare et directement exploitable pour la section RSE du chapitre 2 : plus de **8 millions de segments EEG** issus d’une douzaine de jeux publics et d’un jeu interne, fenêtres de **6 s** avec pas de 0,5 s, prétraitement minimal (notch, passe-bande 0,1–64 Hz, rééchantillonnage à **128 Hz**, standardisation par canal), couverture de **142 électrodes distinctes**, 400 epochs sur une configuration de **16 GPU A100-80 Go**, pour un total déclaré de **32 614 heures·GPU**.
+**Étape 4 — L’encodeur : une attention « plate » canal × temps.** Les 4 096 patches, toutes électrodes et tous instants confondus, forment **une seule séquence** de 4 097 tokens (avec `[CLS]`). L’encodeur est une pile de blocs Transformer standard (auto-attention multi-têtes puis perceptron, avec normalisations et connexions résiduelles), non causale : un patch de C3 à *t* = 1 s peut attendre un patch de Oz à *t* = 3 s. Attention inter-canaux et attention temporelle vivent dans **le même softmax** ; il n’y a pas de bloc « axe des canaux » séparé, ni de biais structurel imposant une localité. Trois tailles sont définies dans le code :
 
-### 3.4.4 L’adaptation aval
+| Variante | *D* | Blocs | Têtes | Patch |
+|---|---:|---:|---:|---:|
+| small | 512 | 8 | 8 | 16 |
+| base | 768 | 12 | 12 | 16 |
+| **large** (utilisée ici) | **1 024** | **24** | **16** | 16 |
 
-Au fine-tuning, le décodeur MAE est **jeté** ; seul l’encodeur est conservé. Il n’y a plus de masquage : la séquence complète est encodée, les *tokens* sont fusionnés (par moyenne, choix par défaut de ST-EEGFormer, les auteurs montrant en annexe que le *token* de classe seul fait moins bien) et une tête linéaire produit la classe ou la valeur régressée.
+La variante *large* compte environ **302 millions de paramètres** (valeur relevée dans nos journaux d’exécution). Le coût de l’attention étant quadratique en nombre de tokens, la longueur 4 097 est ce qui dicte la mémoire GPU (§ 4.5).
+
+### 3.4.3 L’algorithme de pré-entraînement : un auto-encodeur masqué, et rien d’autre
+
+Le pré-entraînement est un **auto-encodeur masqué** (MAE, He et al., 2022) appliqué au signal brut. La boucle d’apprentissage, lue dans `pretrain/models_mae_eeg.py`, est la suivante :
+
+1. **Plonger** tous les patches (étapes 1–3 ci-dessus).
+2. **Masquer** aléatoirement **75 %** des patches (`mask_ratio = 0.75`), tirage indépendant pour chaque exemple : on mélange les positions et l’on ne garde que le premier quart.
+3. **Encoder** uniquement les 25 % visibles avec l’encodeur complet — c’est ce qui rend le MAE économique, l’encodeur ne voyant jamais les patches masqués.
+4. **Réinsérer** les positions masquées sous la forme d’un **vecteur `mask_token` appris**, identique pour toutes, puis ré-additionner à chaque position ses codages temporel et d’électrode (le décodeur possède ses propres tables).
+5. **Décoder** la séquence complète avec un décodeur plus **léger** (*D* = 512, 8 blocs pour *base* et *large*).
+6. **Prédire** pour chaque position les **16 valeurs d’amplitude** du patch (`nn.Linear(512, 16)`).
+7. **Pénaliser** par l’**erreur quadratique moyenne** (MSE) entre patch prédit et patch vrai, calculée **uniquement sur les patches masqués** (`(loss * mask).sum() / mask.sum()`). Une option de normalisation du patch cible existe (`norm_pix_loss`) mais est désactivée par défaut.
+
+La cible d’apprentissage est donc **le signal lui-même**, en amplitudes, et non un indice de dictionnaire. C’est la différence de fond avec LaBraM (§ 3.5), et la raison pour laquelle l’analogie avec les modèles d’imagerie calcique du laboratoire (§ 3.6) fonctionne. C’est aussi ce qui a fait réagir le professeur Ishii le 19 août 2026 : une MSE sur des amplitudes est dominée par l’énergie basse fréquence et les décalages de ligne de base, pas par la structure temporelle fine (chapitre 7).
+
+Le coût de ce pré-entraînement est documenté par les auteurs, ce qui est rare et directement exploitable pour la section RSE du chapitre 2 : plus de **8 millions de segments EEG** issus d’une douzaine de jeux publics et d’un jeu interne, fenêtres de **6 s** avec pas de 0,5 s, prétraitement minimal (notch, passe-bande 0,1–64 Hz, rééchantillonnage à **128 Hz**, standardisation par canal), couverture de **142 électrodes distinctes**, 400 epochs sur une configuration de **16 GPU A100-80 Go**, pour un total déclaré de **32 614 heures·GPU**. Une fenêtre de pré-entraînement représente 6 × 128 / 16 = 48 patches par canal ; notre fenêtre aval de 8 s en représente 64, dans les limites du codage temporel (512 positions).
+
+### 3.4.4 L’adaptation aval (fine-tuning)
+
+Au fine-tuning, le décodeur MAE et le `mask_token` sont **jetés** ; seul l’encodeur est conservé et initialisé avec les poids pré-entraînés. Il n’y a plus de masquage : la séquence complète est encodée, les 4 096 tokens de sortie sont **moyennés** (`global_pool`, le `[CLS]` étant exclu de la moyenne) et une **tête linéaire** unique produit la classe (ici 2 sorties) ou la valeur régressée. La moyenne est le choix par défaut des auteurs, qui montrent en annexe que le `[CLS]` seul fait moins bien. Tous les poids — plongement, 24 blocs, tête — sont mis à jour, avec un taux d’apprentissage éventuellement décroissant vers les couches d’entrée (`layer_decay`, § 4.6).
+
+En sonde linéaire (*linear probing*), seule la tête est apprise ; l’encodeur est gelé.
 
 Deux mises en garde du papier ont directement servi ce stage. D’abord, **la sonde linéaire est faible presque partout** : les représentations pré-entraînées ne sont pas prêtes à l’emploi, sauf sur une tâche facile de détection (ERN) où elles saturent. Ensuite, les auteurs pointent des **facteurs cachés d’implémentation** : certains modèles utilisent des têtes multi-couches tout en annonçant du *linear probing* — la capacité est alors dissimulée dans la tête — et la stratégie de fusion des *tokens* change le champ réceptif effectif. Comparer deux dorsales exige donc de standardiser la tête ; c’est l’une des contributions de loyauté du benchmark.
 
@@ -134,18 +153,72 @@ Quatre conclusions en découlent, et elles ont servi de fil rouge à tout le sta
 
 ## 3.5 LaBraM, le contrepoint discret
 
-**LaBraM** (Jiang et al., 2024) est la ligne suivie en parallèle par Liz Costato, ce qui en fait le point de comparaison naturel de ce stage. Sa mécanique est en deux étapes : un **tokeniseur neuronal** quantifie chaque patch, canal par canal, en un code discret issu d’un dictionnaire appris ; un transformeur est ensuite pré-entraîné à prédire les codes masqués à partir de leur contexte — schéma directement inspiré de la modélisation de langue masquée. Les modèles publiés ont été pré-entraînés sur environ 2 500 heures d’EEG issues d’une vingtaine de jeux ; c’est le point de contrôle `labram-base` qui est utilisé au laboratoire.
+**LaBraM** (*Large Brain Model*, Jiang, Zhao & Lu, ICLR 2024) est la ligne suivie en parallèle par Liz Costato, ce qui en fait le point de comparaison naturel de ce stage. Le dépôt ST-EEGFormer en embarque une copie du code d’encodeur (`benchmark/neural_networks/models/labram.py`, adapté du dépôt officiel, lui-même dérivé de BEiT-v2) afin de l’évaluer dans les mêmes conditions ; c’est cette copie qui est lue ci-dessous, complétée par l’article pour la partie pré-entraînement, absente du dépôt. Le point de contrôle utilisé au laboratoire est `labram-base`.
 
-Le contraste avec ST-EEGFormer se résume en quatre lignes.
+L’idée de LaBraM en une phrase : **traiter l’EEG comme un texte**, dont il faut d’abord apprendre le vocabulaire — un dictionnaire fini de « mots » de signal — avant de pré-entraîner un transformeur à deviner les mots manquants, exactement comme un modèle de langue masqué.
 
-| | ST-EEGFormer | LaBraM |
+### 3.5.1 Architecture de l’encodeur
+
+**Étape 1 — Découpage.** L’entrée est rééchantillonnée à **200 Hz** (fréquence native du modèle ; `model_downstream_task_fs = 200` dans `util/utils.py`) puis coupée, canal par canal, en patches de **200 échantillons, soit 1 s**. Sur notre fenêtre de 8 s à 64 canaux : 8 patches par canal, **64 × 8 = 512 patches** — huit fois moins que ST-EEGFormer, avec des patches huit fois plus longs.
+
+**Étape 2 — Plongement par convolutions.** Là où ST-EEGFormer projette linéairement, LaBraM applique à chaque patch un petit **encodeur temporel convolutif** (`TemporalConv`) : une convolution de noyau 15 et de pas 8, puis deux convolutions de noyau 3, chacune suivie d’une normalisation de groupe et d’une activation GELU. Les 8 cartes de sortie de 25 échantillons sont aplaties en un vecteur de **200** dimensions. Le plongement est donc non linéaire et appris, mais reste **continu** à ce stade — la discrétisation n’intervient qu’au pré-entraînement (§ 3.5.2).
+
+**Étape 3 — *Quand* et *où*, tous deux appris.** Deux tables apprises sont ajoutées : un **plongement d’électrode** (`pos_embed`, 128 emplacements + 1 pour `[CLS]`), indexé par la position de l’électrode dans la liste standard 10-20 étendue du dépôt, et un **plongement temporel** (`time_embed`, 16 emplacements, soit jusqu’à 16 s de fenêtre). Contrairement à ST-EEGFormer, le codage temporel n’est pas sinusoïdal mais appris. Un `[CLS]` est ajouté.
+
+**Étape 4 — Encodeur.** Une pile de blocs Transformer standard, en attention plate sur la séquence canal × temps (513 tokens sur nos données), avec deux raffinements hérités de BEiT-v2 : une normalisation des requêtes et des clés (*qk-norm*) et des facteurs d’échelle appris par bloc (*layer scale*). Trois tailles sont définies :
+
+| Variante | *D* | Blocs | Têtes | Paramètres (papier) |
+|---|---:|---:|---:|---:|
+| **base** (utilisée au laboratoire) | **200** | **12** | **10** | ≈ 5,8 M |
+| large | 400 | 24 | 16 | ≈ 46 M |
+| huge | 800 | 48 | 16 | ≈ 369 M |
+
+Le contraste de taille est frappant : `labram-base` compte **cinquante fois moins de paramètres** que ST-EEGFormer-large, et traite huit fois moins de tokens.
+
+### 3.5.2 L’algorithme de pré-entraînement : d’abord un vocabulaire, ensuite un modèle de langue
+
+Le pré-entraînement se fait en **deux temps**, décrits dans l’article (le code correspondant n’est pas dans le dépôt de ce stage).
+
+**Temps 1 — Apprendre le tokeniseur neuronal (quantification vectorielle).** Un premier réseau apprend un **dictionnaire** (*codebook*) de plusieurs milliers de vecteurs (8 192 dans la configuration publiée). Chaque patch de 1 s est plongé, puis **remplacé par le vecteur du dictionnaire le plus proche** ; le patch devient un **indice entier**. Pour que ces indices portent de l’information, un décodeur doit pouvoir reconstruire quelque chose du patch à partir du code. Le choix de LaBraM est déterminant : la cible n’est **pas le signal brut**, mais son **spectre de Fourier — amplitude et phase**. Les auteurs justifient ce choix par la difficulté à faire converger une reconstruction directe d’EEG brut, jugé trop bruité ; c’est précisément l’affirmation que ST-EEGFormer vient contester (§ 3.4.1).
+
+**Temps 2 — Modélisation d’EEG masqué (*masked EEG modeling*).** Le tokeniseur est ensuite gelé et sert d’oracle. Pour chaque fenêtre : (1) tous les patches sont convertis en indices par le tokeniseur ; (2) **50 %** des patches sont masqués en entrée du transformeur ; (3) le transformeur, à partir du contexte visible, **prédit l’indice** du code de chaque patch masqué ; (4) la perte est une **entropie croisée** sur ces indices, comme un problème de classification à 8 192 classes. Le transformeur n’a donc jamais à produire une amplitude : il apprend à prédire *quel mot du vocabulaire* manque, pas *quelle forme d’onde*.
+
+Les modèles publiés ont été pré-entraînés sur environ **2 500 heures** d’EEG issues d’une vingtaine de jeux publics, avec un prétraitement proche du nôtre (passe-bande 0,1–75 Hz, notch, rééchantillonnage à 200 Hz) — ce qui explique que le pipeline de conversion « v2 » du chapitre 4, aligné sur celui de Liz, convienne aux deux modèles.
+
+### 3.5.3 L’adaptation aval
+
+Au fine-tuning, LaBraM fait **la même chose** que ST-EEGFormer : le tokeniseur et l’objectif de pré-entraînement sont abandonnés, l’encodeur est conservé, les tokens de sortie sont **moyennés** (`use_mean_pooling = True`, suivi d’une normalisation) et une **tête linéaire** produit la classe. La partie discrète de LaBraM ne sert qu’au pré-entraînement ; en aval, les deux modèles sont deux encodeurs continus surmontés d’une couche linéaire. C’est ce qui rend la comparaison du chapitre 6 loyale, et ce qui donne son sens à la quatrième conclusion de Yang et al. : *si le fine-tuning efface l’essentiel de la spécialisation acquise au pré-entraînement, la nature de cet objectif — continu ou discret — cesse d’être discriminante*.
+
+### 3.5.4 Les deux modèles point à point
+
+![Architectures comparées sur nos données](figures/fig_architectures_comparees.png)
+
+**Figure 3.2.** ST-EEGFormer-large et LaBraM-base, étape par étape, sur une même fenêtre de 8 s à 64 canaux. En rouge, la seule étape où les deux modèles diffèrent fondamentalement : l’objectif de pré-entraînement. Valeurs lues dans le code du dépôt.
+
+| | ST-EEGFormer-large | LaBraM-base |
 |---|---|---|
-| Représentation | patches **continus** (Unfold + Linear) | **tokens discrets** (quantification vectorielle) |
-| Objectif auto-supervisé | MSE sur les échantillons masqués | prédiction des codes masqués |
-| Attention | un ViT plat sur la séquence canal × temps | transformeur sur tokens discrets |
+| Fréquence de travail | 128 Hz | 200 Hz |
+| Patch | 16 échantillons = 125 ms, un canal | 200 échantillons = 1 s, un canal |
+| Tokens pour 8 s × 64 canaux | 4 096 | 512 |
+| Plongement du patch | une couche linéaire | trois convolutions + GroupNorm + GELU |
+| Position temporelle | sinusoïdale, fixe | table apprise (16 s max) |
+| Identité de l’électrode | table apprise, 145 emplacements | table apprise, 128 emplacements |
+| Encodeur | 24 blocs, *D* = 1 024, ≈ 302 M param. | 12 blocs, *D* = 200, ≈ 5,8 M param. |
+| Représentation pré-entraînée | **continue** | **discrète** (indices d’un dictionnaire VQ) |
+| Cible de pré-entraînement | les 16 amplitudes du patch | l’indice du code du patch (dictionnaire appris sur le spectre de Fourier) |
+| Perte | MSE sur les patches masqués | entropie croisée sur les indices masqués |
+| Taux de masquage | 75 % | 50 % |
+| Données de pré-entraînement | > 8 M de segments de 6 s, 142 électrodes | ≈ 2 500 h, ≈ 20 jeux |
+| Aval | encodeur + moyenne des tokens + tête linéaire | identique |
 | Rang moyen après fine-tuning (Yang et al.) | 5,61 | 8,99 |
 
-Il faut lire ce tableau pour ce qu’il est : un classement **dans ce benchmark**. Le papier ne conclut pas que LaBraM est inutile, mais que la complexité supplémentaire d’un tokeniseur discret ne se traduit pas clairement par un gain aval **après fine-tuning**. Le fait que nos deux lignes de travail arrivent autour de 62 % sur la même tâche de laboratoire (chapitre 6) est cohérent avec cette lecture.
+Trois lectures de ce tableau.
+
+1. **Ce qui est identique** : la logique ViT (patch par canal, plongement, position, attention plate, moyenne, tête linéaire) et l’adaptation aval. Un lecteur qui comprend l’un comprend l’autre.
+2. **Ce qui diffère vraiment** : la *cible* du pré-entraînement. ST-EEGFormer fait une régression des amplitudes ; LaBraM fait une classification d’indices dont le dictionnaire encode le spectre. Les deux se disent « masqués » mais ne prédisent pas la même chose — c’est la confusion levée au § 3.3.
+3. **Ce qui diffère en échelle** : cinquante fois plus de paramètres et huit fois plus de tokens côté ST-EEGFormer, avec des patches huit fois plus courts. Ce sont deux régimes différents de résolution temporelle et de coût, ce qui compte pour la suite (chapitre 7) : améliorer l’un n’est pas nécessairement améliorer l’autre.
+
+Il faut lire la dernière ligne pour ce qu’elle est : un classement **dans le benchmark de Yang et al.** Le papier ne conclut pas que LaBraM est inutile, mais que la complexité supplémentaire d’un tokeniseur discret ne se traduit pas clairement par un gain aval **après fine-tuning**. Le fait que nos deux lignes de travail arrivent autour de 62 % sur la même tâche de laboratoire (chapitre 6) est cohérent avec cette lecture.
 
 ## 3.6 Un détour utile : les modèles de fondation en imagerie calcique
 

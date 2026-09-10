@@ -139,15 +139,16 @@ const doc = new Document({
       table(
         ["Setting", "ST-EEGFormer", "LaBraM", "LDA", "Chance"],
         [
-          ["Population (43 subjects)", "61.66% ≈ 61.7%", "~62%", "55.7%", "50%"],
-          ["LOSO, 41 completed folds", "53.55% ± 3.20%", "~62% (Liz, earlier)", "—", "50%"],
+          ["Population (43 subjects)", "61.66% ≈ 61.7%", "~62%", "55.7%*", "50%"],
+          ["LOSO, 41 completed folds", "53.55% ± 3.20%", "Not compared\n(protocol not aligned)", "—", "50%"],
         ],
         [2800, 2000, 2000, 1400, 1438]
       ),
       new Paragraph({ spacing: { after: 160, before: 120, line: 276 }, children: [
         new TextRun({ text: "Population is the number to cite for parity with LaBraM. It is not a held-out-subject score: train and test sessions still come from the same people. The LOSO mean comes from summarize_g2_json_logs.py on ~/data/g2_outputs/spatial_loo (2 Sep): 41 runs with JSON metrics, acc1_whole at the finetune stage. Folder leave_out_sub-060 exists but has no JSON yet. I do not treat 53.5% as a population-style headline.", font: "Calibri", size: 22, color: ink }),
       ]}),
-      p("Per-subject spread is large. Subjects that stay hard in both ST-EEGFormer and LaBraM include 004, 019, 020, 031 and 046 (015 is also worth a closer look). Easy examples on our side include 007, 029, 048 and 051."),
+      p("* The available LDA figure is from the 8-subject part0 table, not a full 43-subject result."),
+      p("Per-subject spread is large. During the 2 September side-by-side discussion with Liz, subjects 004, 019, 020, 031 and 046 were flagged while reviewing the two result sets (015 is also worth monitoring). This is a discussion-based observation, not yet a formal cross-model correlation analysis. Easy examples on our side include 007, 029, 048 and 051."),
 
       h2("4. Problems encountered"),
       p("Three separate failures looked like “the model does not work”: missing preprocessing (LDA also at chance), then a frozen backbone (layer_decay), then long LOSO jobs that died and had to be resumed from COMPLETED markers."),

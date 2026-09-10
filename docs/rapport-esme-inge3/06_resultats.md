@@ -94,7 +94,7 @@ Ce 53,55 % n’est **pas** le 61,66 % population, et ce n’est pas non plus le 
 
 La comparaison avec un LOSO LaBraM ~62 % (chiffre Liz, protocole à confirmer) n’est pas une conclusion d’écart de modèle tant que les plis, la métrique et le stade (zero-shot vs calibration) ne sont pas appariés.
 
-Réunion Liz du **2 septembre** : sujets durs communs **004, 019, 020, 031, 046**. Pistes preprocessing (EA, laplacien, artefacts) **non encore chiffrées** sur ST-EEGFormer.
+Réunion Liz du **2 septembre** : en mettant côte à côte les résultats par sujet des deux pipelines, les sujets **004, 019, 020, 031, 046** ressortent comme difficiles pour les deux modèles (015 à surveiller). C’est une observation issue de la discussion, pas une analyse de corrélation formelle. Pistes preprocessing (EA, laplacien, artefacts) **non encore chiffrées** sur ST-EEGFormer au 10 septembre 2026.
 
 ## 6.5 Ce que ces chiffres ne disent pas
 

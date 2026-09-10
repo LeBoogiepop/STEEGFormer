@@ -63,7 +63,7 @@ Le domaine dans lequel s’inscrit ce stage est intrinsèquement coûteux en én
 |---|---|---|
 | Runs BCI-IV-2a : population 100 epochs à ~3 h/epoch, puis LOO 9 plis × 150 epochs | plusieurs centaines d’heures·GPU | validation de l’infrastructure ; **aucun résultat exploitable** (niveau du hasard) |
 | Run population 43 sujets, 50 epochs à ~55 min/epoch | de l’ordre de 45 h·GPU | le résultat principal du stage |
-| LOSO 43 plis (50 + 30 epochs par pli) | environ **un pli par jour** sur GPU dédiée, soit plusieurs semaines de calcul continu | en cours |
+| LOSO 41 plis (50 + 30 epochs par pli) | environ **un pli par jour** sur GPU dédiée, soit plusieurs semaines de calcul continu (juillet → 2 septembre) | 53,55 % ± 3,20 % : la mesure du transfert inter-sujets |
 | Sonde linéaire, encodeur gelé (2 050 paramètres entraînables) | ~21 s/epoch, ~1,8 Go de mémoire GPU | diagnostic rapide |
 
 Le contraste de la dernière ligne est instructif : entre une sonde linéaire et un fine-tuning complet, le coût varie de plus de deux ordres de grandeur pour une même question posée aux données. Une part importante de la sobriété consiste simplement à **choisir le protocole le moins cher qui réponde à la question**.

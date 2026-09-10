@@ -50,7 +50,7 @@
 |---|---|---|
 | Semaine du 8 sept. | Rapport court Cuong (2–3 p., EN) | `presentations/progress_report_cuong_2026-09.docx` |
 | **14 sept.** | Rapport ESME Moodle (40–50 p.) | `docs/rapport-esme-inge3/` |
-| **21 sept.** | Soutenance ESME (20 min) | — |
+| **21 sept.** | Soutenance ESME (20 min) | slides architecture prêtes : `presentations/ST-EEGFormer_soutenance_ESME_2026-09-21_architectures.pptx` (`pptx_build/build_defense_0921.js`) |
 | ~9 sept. (retour labo) | Tests preprocessing Liz sur mnode | `benchmark/spatial_attention/run_on_mnode.sh` |
 
 **Objectif recherche (Cuong)** : gagner **quelques %** vs ~61.7% / parité LaBraM.

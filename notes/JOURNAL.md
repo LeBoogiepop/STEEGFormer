@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-09-10 (jeu.) — Recommandations Cuong → rapport ESME v2
+
+Mail de Cuong (« Some recommendations for your report ») : décrire plus clairement l'architecture et l'algorithme de **ST-EEGFormer et LaBraM**, réfléchir en profondeur à **comment améliorer ces algorithmes**, ajouter des slides avec figures de modèles, envoyer le rapport ≥ 1 semaine avant la soutenance (21/09).
+
+Fait dans `docs/rapport-esme-inge3/` :
+- Ch. 3 : § 3.4.2–3.4.4 réécrits (ViT sur signal brut, algorithme MAE pas à pas, tailles), § 3.5 LaBraM entièrement nouveau (encodeur lu dans `benchmark/neural_networks/models/labram.py` : 200 Hz, patch 1 s, TemporalConv 3 convs, pos_embed 128+1, time_embed 16, base 200/12/10 ; pré-entraînement VQ + masked EEG modeling d'après le papier), tableau point à point, **figure 3.2** (`make_fig_architectures.py`).
+- Ch. 7 : **§ 7.7 « Comment améliorer ces algorithmes ? »** — 4 leviers (entrée, représentation, objectif, adaptation/mesure), statut réalisé / prêt à tester / prospectif, tableau de synthèse. Recul → § 7.8.
+- Faits périmés corrigés : résumé/abstract (LOSO « en cours » → 53,55 % ± 3,20 %), tableau RSE ch. 2, sujets durs = observation de discussion (ch. 5, 6), § 5.11 (3–10 sept.), biblio (LaBraM ICLR 2024, He & Wu 2020).
+- DOCX + PDF régénérés (54 p., ~21 200 mots), TOC via Word COM (pywin32 absent → PowerShell).
+- Slides soutenance : `presentations/ST-EEGFormer_soutenance_ESME_2026-09-21_architectures.pptx` (3 slides, notes FR) via `pptx_build/build_defense_0921.js`.
+
+À confirmer avec Liz : codebook 8 192 / masque 50 % de LaBraM (cités d'après l'article, code de pré-entraînement absent du dépôt).
+
+Réunion Liz du 9 sept. : recap des constats du 2 sept. (deck `ST-EEGFormer_Liz_meeting_2026-09-09_PRESENT.pptx`). Tests EA / CSD / artefacts toujours **non exécutés** sur mnode.
+
 ## 2026-09-02 (mer.) — Mail Cuong + réunion Liz + LOSO fini + VPN
 
 ### Mail envoyé à Cuong (PHI Tien Cuong + Ishii-sensei en CC)
